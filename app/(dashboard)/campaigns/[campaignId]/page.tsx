@@ -1,0 +1,944 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { useRouter, useParams } from "next/navigation"
+import { useCampaign, type CampaignPatient, type Campaign } from "@/contexts/campaign-context"
+import { usePatients } from "@/contexts/patient-context"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Textarea } from "@/components/ui/textarea"
+import { Calendar as CalendarComponent } from "@/components/ui/calendar"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import {
+  ArrowLeft,
+  Phone,
+  Mail,
+  Calendar,
+  Bot,
+  User,
+  Clock,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  MessagesSquare,
+  BarChart3,
+  TrendingUp,
+  Users,
+  Target,
+  DollarSign,
+  Smile,
+  Frown,
+  Meh,
+  PhoneCall,
+  PhoneOff,
+  PhoneIncoming,
+  Activity
+} from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+
+const statusConfig = {
+  not_contacted: { label: 'Not Contacted', color: 'bg-slate-100 text-slate-700', icon: Clock },
+  contacted: { label: 'Contacted', color: 'bg-blue-100 text-blue-700', icon: Phone },
+  interested: { label: 'Interested', color: 'bg-purple-100 text-purple-700', icon: CheckCircle },
+  not_interested: { label: 'Not Interested', color: 'bg-red-100 text-red-700', icon: XCircle },
+  scheduled: { label: 'Scheduled', color: 'bg-amber-100 text-amber-700', icon: Calendar },
+  screened: { label: 'Screened', color: 'bg-green-100 text-green-700', icon: CheckCircle },
+  enrolled: { label: 'Enrolled', color: 'bg-green-600 text-white', icon: CheckCircle },
+}
+
+export default function CampaignDetailPage() {
+  const router = useRouter()
+  const params = useParams()
+  const { getCampaignById, updatePatientStatus } = useCampaign()
+  const { patients, updatePatient } = usePatients()
+  const campaignId = params?.campaignId as string
+
+  const [campaign, setCampaign] = useState<Campaign | null>(null)
+  const [selectedPatient, setSelectedPatient] = useState<CampaignPatient | null>(null)
+  const [contactNotes, setContactNotes] = useState("")
+  const [newStatus, setNewStatus] = useState<CampaignPatient['status']>('contacted')
+  const [isUpdating, setIsUpdating] = useState(false)
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+  const [selectedCallTranscript, setSelectedCallTranscript] = useState<any | null>(null)
+  const [overrideDialogOpen, setOverrideDialogOpen] = useState(false)
+  const [overrideTag, setOverrideTag] = useState<string>("")
+  const [overrideStatus, setOverrideStatus] = useState<string>("")
+  const [overrideReason, setOverrideReason] = useState("")
+
+  // Load campaign by ID on mount
+  useEffect(() => {
+    if (campaignId) {
+      const foundCampaign = getCampaignById(campaignId)
+      setCampaign(foundCampaign || null)
+    }
+  }, [campaignId, getCampaignById])
+
+  if (!campaign) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+        <Card>
+          <CardContent className="p-6 text-center">
+            <AlertCircle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Campaign Not Found</h3>
+            <Button onClick={() => router.push('/campaigns')}>
+              Back to Campaigns
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  const handleUpdateStatus = () => {
+    if (!selectedPatient) return
+
+    setIsUpdating(true)
+    updatePatientStatus(campaignId, selectedPatient.id, newStatus, contactNotes)
+
+    // Reload campaign to reflect updates
+    setTimeout(() => {
+      const updatedCampaign = getCampaignById(campaignId)
+      setCampaign(updatedCampaign || null)
+      setIsUpdating(false)
+      setSelectedPatient(null)
+      setContactNotes("")
+      setNewStatus('contacted')
+    }, 500)
+  }
+
+  const handleInitiateAICall = async (patient: CampaignPatient) => {
+    try {
+      // Call your backend API to initiate AI call
+      const response = await fetch('/api/initiate-call', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          patientId: patient.id,
+          phone: patient.phone,
+          campaignId: campaignId,
+          studyId: campaign?.studyId
+        })
+      })
+
+      if (response.ok) {
+        alert(`AI call initiated to ${patient.name}`)
+        // Update patient status to "AI Call Initiated"
+        updatePatientStatus(campaignId, patient.id, 'contacted', 'AI call initiated')
+
+        // Also update in patient context
+        const contextPatient = patients.find(p => p.id === patient.id)
+        if (contextPatient) {
+          updatePatient(patient.id, {
+            status: 'AI Call Initiated'
+          })
+        }
+      }
+    } catch (error) {
+      alert('Failed to initiate AI call')
+    }
+  }
+
+  const handleManualOverride = () => {
+    if (!selectedCallTranscript || !selectedCallTranscript.patientId) return
+
+    setIsUpdating(true)
+
+    // Update in patient context
+    updatePatient(selectedCallTranscript.patientId, {
+      tag: overrideTag as any,
+      status: overrideStatus as any,
+      eligibilityOverride: {
+        originalTag: selectedCallTranscript.originalTag || '',
+        originalStatus: selectedCallTranscript.originalStatus || '',
+        newTag: overrideTag,
+        newStatus: overrideStatus,
+        reason: overrideReason,
+        overriddenBy: 'CRC',
+        overriddenAt: new Date().toISOString()
+      }
+    })
+
+    setTimeout(() => {
+      setIsUpdating(false)
+      setOverrideDialogOpen(false)
+      setSelectedCallTranscript(null)
+      setOverrideReason("")
+
+      // Reload campaign
+      const updatedCampaign = getCampaignById(campaignId)
+      setCampaign(updatedCampaign || null)
+    }, 500)
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      {/* Header */}
+      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push('/campaigns')}
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Campaigns
+              </Button>
+              <div>
+                <h1 className="text-2xl font-bold text-slate-900">{campaign.name}</h1>
+                <p className="text-sm text-slate-600">{campaign.studyName}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="container mx-auto px-6 py-8 space-y-6">
+        <Tabs defaultValue="patients" className="w-full">
+          <TabsList className="grid w-full md:w-[600px] grid-cols-4">
+            <TabsTrigger value="patients">Patients</TabsTrigger>
+            <TabsTrigger value="calls">Calls</TabsTrigger>
+            <TabsTrigger value="calendar">Calendar</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="patients" className="space-y-6 mt-6">
+            {/* Summary Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <Card>
+            <CardContent className="p-4 text-center">
+              <p className="text-2xl font-bold text-slate-900">{campaign.totalPatients}</p>
+              <p className="text-xs text-slate-600">Total Patients</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 text-center">
+              <p className="text-2xl font-bold text-blue-600">{campaign.contacted}</p>
+              <p className="text-xs text-slate-600">Contacted</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 text-center">
+              <p className="text-2xl font-bold text-purple-600">{campaign.interested}</p>
+              <p className="text-xs text-slate-600">Interested</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 text-center">
+              <p className="text-2xl font-bold text-amber-600">{campaign.scheduled}</p>
+              <p className="text-xs text-slate-600">Scheduled</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 text-center">
+              <p className="text-2xl font-bold text-green-600">{campaign.enrolled}</p>
+              <p className="text-xs text-slate-600">Enrolled</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Patient List */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Campaign Patients
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {campaign.patients.map((patient) => {
+                const StatusIcon = statusConfig[patient.status].icon
+                return (
+                  <div
+                    key={patient.id}
+                    className="border rounded-lg p-4 bg-slate-50 hover:bg-slate-100 transition-colors"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-semibold text-slate-900">{patient.name}</h4>
+                          <Badge className={statusConfig[patient.status].color}>
+                            <StatusIcon className="h-3 w-3 mr-1" />
+                            {statusConfig[patient.status].label}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-slate-600">
+                          {patient.age} years old • {patient.gender}
+                        </p>
+                        <div className="flex items-center gap-4 mt-2 text-xs text-slate-600">
+                          <span className="flex items-center gap-1">
+                            <Phone className="h-3 w-3" />
+                            {patient.phone}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Mail className="h-3 w-3" />
+                            {patient.email}
+                          </span>
+                        </div>
+                        {patient.lastContactDate && (
+                          <p className="text-xs text-slate-500 mt-2">
+                            Last contact: {patient.lastContactDate}
+                            {patient.lastContactMethod && ` via ${patient.lastContactMethod}`}
+                          </p>
+                        )}
+                        {patient.notes && (
+                          <div className="mt-2 p-2 bg-white rounded border border-slate-200">
+                            <p className="text-xs text-slate-700">
+                              <strong>Notes:</strong> {patient.notes}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setSelectedPatient(patient)
+                              setContactNotes(patient.notes || "")
+                              setNewStatus(patient.status)
+                            }}
+                          >
+                            <MessagesSquare className="h-3 w-3 mr-1" />
+                            Update Status
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Update Patient Status</DialogTitle>
+                            <DialogDescription>
+                              {patient.name} - Update contact status and add notes
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-4 py-4">
+                            <div>
+                              <label className="text-sm font-medium mb-2 block">Status</label>
+                              <Select
+                                value={newStatus}
+                                onValueChange={(value) => setNewStatus(value as CampaignPatient['status'])}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="not_contacted">Not Contacted</SelectItem>
+                                  <SelectItem value="contacted">Contacted</SelectItem>
+                                  <SelectItem value="interested">Interested</SelectItem>
+                                  <SelectItem value="not_interested">Not Interested</SelectItem>
+                                  <SelectItem value="scheduled">Scheduled</SelectItem>
+                                  <SelectItem value="screened">Screened</SelectItem>
+                                  <SelectItem value="enrolled">Enrolled</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium mb-2 block">Notes</label>
+                              <Textarea
+                                value={contactNotes}
+                                onChange={(e) => setContactNotes(e.target.value)}
+                                placeholder="Add notes about this contact..."
+                                rows={4}
+                              />
+                            </div>
+                            <Button
+                              onClick={handleUpdateStatus}
+                              disabled={isUpdating}
+                              className="w-full"
+                            >
+                              {isUpdating ? 'Updating...' : 'Save Changes'}
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleInitiateAICall(patient)}
+                      >
+                        <Bot className="h-3 w-3 mr-1" />
+                        AI Call
+                      </Button>
+
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => window.location.href = `tel:${patient.phone}`}
+                      >
+                        <Phone className="h-3 w-3 mr-1" />
+                        Call
+                      </Button>
+
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => window.location.href = `mailto:${patient.email}`}
+                      >
+                        <Mail className="h-3 w-3 mr-1" />
+                        Email
+                      </Button>
+
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => router.push(`/ingest/patients/${patient.id}`)}
+                      >
+                        <User className="h-3 w-3 mr-1" />
+                        Profile
+                      </Button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
+          </TabsContent>
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics" className="space-y-6 mt-6">
+            {/* KPI Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-600">Total Calls Made</p>
+                      <p className="text-3xl font-bold text-slate-900 mt-2">847</p>
+                      <p className="text-xs text-green-600 mt-1">↑ 12% from last week</p>
+                    </div>
+                    <PhoneCall className="h-12 w-12 text-blue-500 opacity-20" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-600">Call Completion Rate</p>
+                      <p className="text-3xl font-bold text-slate-900 mt-2">65%</p>
+                      <p className="text-xs text-green-600 mt-1">↑ 3% from last week</p>
+                    </div>
+                    <PhoneIncoming className="h-12 w-12 text-green-500 opacity-20" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-600">Avg Handle Time</p>
+                      <p className="text-3xl font-bold text-slate-900 mt-2">18:32</p>
+                      <p className="text-xs text-slate-600 mt-1">minutes</p>
+                    </div>
+                    <Clock className="h-12 w-12 text-purple-500 opacity-20" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-600">Conversion Rate</p>
+                      <p className="text-3xl font-bold text-slate-900 mt-2">28%</p>
+                      <p className="text-xs text-green-600 mt-1">↑ 5% from last week</p>
+                    </div>
+                    <Target className="h-12 w-12 text-amber-500 opacity-20" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Call Outcomes */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-blue-600" />
+                  Call Outcome Breakdown
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="h-3 w-3 rounded-full bg-green-500"></div>
+                        <span className="text-sm font-medium">Completed & Qualified</span>
+                      </div>
+                      <span className="text-sm font-bold">238 (28%)</span>
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-2">
+                      <div className="bg-green-500 h-2 rounded-full" style={{width: '28%'}}></div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="h-3 w-3 rounded-full bg-blue-500"></div>
+                        <span className="text-sm font-medium">Completed & Not Qualified</span>
+                      </div>
+                      <span className="text-sm font-bold">312 (37%)</span>
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-2">
+                      <div className="bg-blue-500 h-2 rounded-full" style={{width: '37%'}}></div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="h-3 w-3 rounded-full bg-slate-400"></div>
+                        <span className="text-sm font-medium">No Answer</span>
+                      </div>
+                      <span className="text-sm font-bold">185 (22%)</span>
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-2">
+                      <div className="bg-slate-400 h-2 rounded-full" style={{width: '22%'}}></div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="h-3 w-3 rounded-full bg-amber-500"></div>
+                        <span className="text-sm font-medium">Voicemail Left</span>
+                      </div>
+                      <span className="text-sm font-bold">78 (9%)</span>
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-2">
+                      <div className="bg-amber-500 h-2 rounded-full" style={{width: '9%'}}></div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="h-3 w-3 rounded-full bg-red-500"></div>
+                        <span className="text-sm font-medium">Declined Participation</span>
+                      </div>
+                      <span className="text-sm font-bold">34 (4%)</span>
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-2">
+                      <div className="bg-red-500 h-2 rounded-full" style={{width: '4%'}}></div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Demographic Distribution & Call Performance */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Demographic Distribution */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-blue-600" />
+                    Demographic Distribution
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {/* Age Distribution Pie Chart */}
+                    <div>
+                      <p className="text-sm font-semibold text-slate-700 mb-4">Age Groups</p>
+                      <div className="flex items-center justify-center mb-4">
+                        <div className="relative w-48 h-48">
+                          <svg viewBox="0 0 100 100" className="transform -rotate-90">
+                            {/* 50-60: 28% */}
+                            <circle cx="50" cy="50" r="40" fill="none" stroke="#3b82f6" strokeWidth="20"
+                              strokeDasharray="70.4 251.2" strokeDashoffset="0" />
+                            {/* 60-70: 42% */}
+                            <circle cx="50" cy="50" r="40" fill="none" stroke="#60a5fa" strokeWidth="20"
+                              strokeDasharray="105.6 251.2" strokeDashoffset="-70.4" />
+                            {/* 70-80: 25% */}
+                            <circle cx="50" cy="50" r="40" fill="none" stroke="#93c5fd" strokeWidth="20"
+                              strokeDasharray="62.8 251.2" strokeDashoffset="-176" />
+                            {/* 80+: 5% */}
+                            <circle cx="50" cy="50" r="40" fill="none" stroke="#dbeafe" strokeWidth="20"
+                              strokeDasharray="12.56 251.2" strokeDashoffset="-238.8" />
+                          </svg>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="text-center">
+                              <p className="text-2xl font-bold text-slate-900">847</p>
+                              <p className="text-xs text-slate-600">Total</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-blue-600"></div>
+                          <span className="text-xs text-slate-600">50-60 (28%)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-blue-400"></div>
+                          <span className="text-xs text-slate-600">60-70 (42%)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-blue-300"></div>
+                          <span className="text-xs text-slate-600">70-80 (25%)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-blue-100"></div>
+                          <span className="text-xs text-slate-600">80+ (5%)</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Gender Distribution Pie Chart */}
+                    <div className="pt-4 border-t">
+                      <p className="text-sm font-semibold text-slate-700 mb-4">Gender Distribution</p>
+                      <div className="flex items-center justify-center mb-4">
+                        <div className="relative w-48 h-48">
+                          <svg viewBox="0 0 100 100" className="transform -rotate-90">
+                            {/* Female: 58% */}
+                            <circle cx="50" cy="50" r="40" fill="none" stroke="#8b5cf6" strokeWidth="20"
+                              strokeDasharray="145.6 251.2" strokeDashoffset="0" />
+                            {/* Male: 42% */}
+                            <circle cx="50" cy="50" r="40" fill="none" stroke="#c4b5fd" strokeWidth="20"
+                              strokeDasharray="105.6 251.2" strokeDashoffset="-145.6" />
+                          </svg>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="text-center">
+                              <p className="text-2xl font-bold text-slate-900">847</p>
+                              <p className="text-xs text-slate-600">Total</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-purple-600"></div>
+                          <span className="text-xs text-slate-600">Female (58%)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-purple-300"></div>
+                          <span className="text-xs text-slate-600">Male (42%)</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Call Performance by Time of Day */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Clock className="h-5 w-5 text-blue-600" />
+                    Call Performance by Time of Day
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="h-64 relative">
+                      {/* Y-axis labels */}
+                      <div className="absolute left-0 top-0 bottom-8 w-8 flex flex-col justify-between text-xs text-slate-600">
+                        <span>100%</span>
+                        <span>75%</span>
+                        <span>50%</span>
+                        <span>25%</span>
+                        <span>0%</span>
+                      </div>
+
+                      {/* Graph area */}
+                      <div className="ml-10 h-full pb-8 relative">
+                        {/* Grid lines */}
+                        <div className="absolute inset-0 flex flex-col justify-between">
+                          <div className="border-t border-slate-200"></div>
+                          <div className="border-t border-slate-200"></div>
+                          <div className="border-t border-slate-200"></div>
+                          <div className="border-t border-slate-200"></div>
+                          <div className="border-t border-slate-200"></div>
+                        </div>
+
+                        {/* Bars */}
+                        <div className="absolute inset-0 flex items-end justify-between gap-0.5 pb-8">
+                          <div className="flex-1 bg-blue-600 rounded-t" style={{height: '32%'}} title="6am: 32%"></div>
+                          <div className="flex-1 bg-blue-600 rounded-t" style={{height: '28%'}} title="7am: 28%"></div>
+                          <div className="flex-1 bg-blue-600 rounded-t" style={{height: '35%'}} title="8am: 35%"></div>
+                          <div className="flex-1 bg-blue-600 rounded-t" style={{height: '45%'}} title="9am: 45%"></div>
+                          <div className="flex-1 bg-blue-600 rounded-t" style={{height: '58%'}} title="10am: 58%"></div>
+                          <div className="flex-1 bg-blue-600 rounded-t" style={{height: '52%'}} title="11am: 52%"></div>
+                          <div className="flex-1 bg-blue-600 rounded-t" style={{height: '38%'}} title="12pm: 38%"></div>
+                          <div className="flex-1 bg-blue-600 rounded-t" style={{height: '42%'}} title="1pm: 42%"></div>
+                          <div className="flex-1 bg-blue-600 rounded-t" style={{height: '55%'}} title="2pm: 55%"></div>
+                          <div className="flex-1 bg-blue-600 rounded-t" style={{height: '65%'}} title="3pm: 65%"></div>
+                          <div className="flex-1 bg-blue-600 rounded-t" style={{height: '62%'}} title="4pm: 62%"></div>
+                          <div className="flex-1 bg-blue-600 rounded-t" style={{height: '48%'}} title="5pm: 48%"></div>
+                          <div className="flex-1 bg-blue-600 rounded-t" style={{height: '40%'}} title="6pm: 40%"></div>
+                          <div className="flex-1 bg-blue-600 rounded-t" style={{height: '35%'}} title="7pm: 35%"></div>
+                          <div className="flex-1 bg-blue-600 rounded-t" style={{height: '28%'}} title="8pm: 28%"></div>
+                          <div className="flex-1 bg-blue-600 rounded-t" style={{height: '22%'}} title="9pm: 22%"></div>
+                          <div className="flex-1 bg-blue-600 rounded-t" style={{height: '18%'}} title="10pm: 18%"></div>
+                        </div>
+
+                        {/* X-axis labels */}
+                        <div className="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-slate-600">
+                          <span>6a</span>
+                          <span>8a</span>
+                          <span>10a</span>
+                          <span>12p</span>
+                          <span>2p</span>
+                          <span>4p</span>
+                          <span>6p</span>
+                          <span>8p</span>
+                          <span>10p</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                          <p className="text-xs text-slate-600 mb-1">Best Time to Call</p>
+                          <p className="text-lg font-bold text-blue-900">2-4 PM</p>
+                          <p className="text-xs text-slate-600">65% answer rate</p>
+                        </div>
+                        <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                          <p className="text-xs text-slate-600 mb-1">Worst Time to Call</p>
+                          <p className="text-lg font-bold text-slate-900">10 PM</p>
+                          <p className="text-xs text-slate-600">18% answer rate</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Talk Time & Engagement */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Clock className="h-5 w-5 text-blue-600" />
+                    Talk Time & Engagement
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-700 mb-3">Talk Time Distribution</p>
+                    <div className="space-y-3">
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm text-slate-600">AI Talk Time</span>
+                          <span className="text-sm font-bold">58%</span>
+                        </div>
+                        <div className="w-full bg-slate-100 rounded-full h-2">
+                          <div className="bg-blue-500 h-2 rounded-full" style={{width: '58%'}}></div>
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm text-slate-600">Patient Talk Time</span>
+                          <span className="text-sm font-bold">42%</span>
+                        </div>
+                        <div className="w-full bg-slate-100 rounded-full h-2">
+                          <div className="bg-green-500 h-2 rounded-full" style={{width: '42%'}}></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                    <div className="text-center p-3 bg-slate-50 rounded-lg">
+                      <p className="text-sm text-slate-600">Interruption Rate</p>
+                      <p className="text-2xl font-bold text-slate-900 mt-1">3.2%</p>
+                    </div>
+                    <div className="text-center p-3 bg-slate-50 rounded-lg">
+                      <p className="text-sm text-slate-600">Silence Duration</p>
+                      <p className="text-2xl font-bold text-slate-900 mt-1">8.5s</p>
+                    </div>
+                    <div className="text-center p-3 bg-slate-50 rounded-lg">
+                      <p className="text-sm text-slate-600">Speech Rate</p>
+                      <p className="text-2xl font-bold text-slate-900 mt-1">145 wpm</p>
+                    </div>
+                    <div className="text-center p-3 bg-slate-50 rounded-lg">
+                      <p className="text-sm text-slate-600">Questions Asked</p>
+                      <p className="text-2xl font-bold text-slate-900 mt-1">4.2 avg</p>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t">
+                    <p className="text-sm font-semibold text-slate-700 mb-3">Engagement Indicators</p>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-slate-600">Patient actively asking questions</span>
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-slate-600">Minimal silence/hesitation</span>
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-slate-600">Balanced talk time ratio</span>
+                        <CheckCircle className="h-4 w-4 text-amber-600" />
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Financial Metrics & Criteria Verification */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Financial Metrics */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <DollarSign className="h-5 w-5 text-green-600" />
+                    Financial & ROI Metrics
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 bg-slate-50 rounded-lg">
+                        <p className="text-xs text-slate-600 mb-1">Total Campaign Cost</p>
+                        <p className="text-2xl font-bold text-slate-900">$8,470</p>
+                      </div>
+                      <div className="p-4 bg-slate-50 rounded-lg">
+                        <p className="text-xs text-slate-600 mb-1">Cost per Call</p>
+                        <p className="text-2xl font-bold text-slate-900">$10</p>
+                      </div>
+                      <div className="p-4 bg-blue-50 rounded-lg">
+                        <p className="text-xs text-blue-700 mb-1">Cost per Answered</p>
+                        <p className="text-2xl font-bold text-blue-900">$15.40</p>
+                      </div>
+                      <div className="p-4 bg-purple-50 rounded-lg">
+                        <p className="text-xs text-purple-700 mb-1">Cost per Qualified</p>
+                        <p className="text-2xl font-bold text-purple-900">$56.85</p>
+                      </div>
+                    </div>
+
+                    <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                      <p className="text-sm font-semibold text-green-900 mb-2">Cost per Enrolled Patient</p>
+                      <p className="text-3xl font-bold text-green-900">$89.16</p>
+                      <p className="text-xs text-green-700 mt-1">33% below target of $120</p>
+                    </div>
+
+                    <div className="p-4 bg-slate-50 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-semibold text-slate-700">Projected ROI</span>
+                        <Badge className="bg-green-600 text-white">Positive</Badge>
+                      </div>
+                      <div className="text-xs text-slate-600">
+                        Based on $2,500 avg value per enrolled patient
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Criteria Verification Performance */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    Criteria Verification Performance
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium">Age Verification</span>
+                        <span className="text-sm font-bold">98%</span>
+                      </div>
+                      <div className="w-full bg-slate-100 rounded-full h-2">
+                        <div className="bg-green-500 h-2 rounded-full" style={{width: '98%'}}></div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium">Diagnosis Confirmation</span>
+                        <span className="text-sm font-bold">95%</span>
+                      </div>
+                      <div className="w-full bg-slate-100 rounded-full h-2">
+                        <div className="bg-green-500 h-2 rounded-full" style={{width: '95%'}}></div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium">Study Partner Confirmation</span>
+                        <span className="text-sm font-bold">87%</span>
+                      </div>
+                      <div className="w-full bg-slate-100 rounded-full h-2">
+                        <div className="bg-green-500 h-2 rounded-full" style={{width: '87%'}}></div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium">Consent Recording</span>
+                        <span className="text-sm font-bold">92%</span>
+                      </div>
+                      <div className="w-full bg-slate-100 rounded-full h-2">
+                        <div className="bg-green-500 h-2 rounded-full" style={{width: '92%'}}></div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium">Visit Scheduling</span>
+                        <span className="text-sm font-bold">85%</span>
+                      </div>
+                      <div className="w-full bg-slate-100 rounded-full h-2">
+                        <div className="bg-amber-500 h-2 rounded-full" style={{width: '85%'}}></div>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t">
+                      <p className="text-sm font-semibold text-slate-700 mb-3">Average Questions Needed</p>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="text-center p-2 bg-slate-50 rounded">
+                          <p className="text-lg font-bold text-slate-900">2.3</p>
+                          <p className="text-xs text-slate-600">Age</p>
+                        </div>
+                        <div className="text-center p-2 bg-slate-50 rounded">
+                          <p className="text-lg font-bold text-slate-900">3.1</p>
+                          <p className="text-xs text-slate-600">Diagnosis</p>
+                        </div>
+                        <div className="text-center p-2 bg-slate-50 rounded">
+                          <p className="text-lg font-bold text-slate-900">2.8</p>
+                          <p className="text-xs text-slate-600">Partner</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </main>
+    </div>
+  )
+}
