@@ -48,15 +48,23 @@ export default function AnalyticsPage() {
 
   // Calculate study-specific metrics
   const totalLeads = studyPatients.length
+
+  // Patients who have been called (have call history)
   const totalCalled = studyPatients.filter(p =>
-    p.status !== 'Pending Review'
-  ).length
-  const totalAnswered = studyPatients.filter(p =>
     p.callHistory && p.callHistory.length > 0
   ).length
+
+  // Patients who answered calls (have call history with completed outcome)
+  const totalAnswered = studyPatients.filter(p =>
+    p.callHistory && p.callHistory.some(call => call.outcome === 'completed')
+  ).length
+
+  // All patients are prescreened (they have tags assigned)
   const totalPrescreened = studyPatients.filter(p =>
     p.tag === 'Eligible' || p.tag === 'Match' || p.tag === 'Potential Match' || p.tag === 'Ineligible'
   ).length
+
+  // Patients with scheduled visits
   const totalVisitScheduled = studyPatients.filter(p =>
     p.status === 'On-site visit scheduled' || p.visitScheduledDate
   ).length
@@ -66,6 +74,98 @@ export default function AnalyticsPage() {
   const answerRate = totalCalled > 0 ? Math.round((totalAnswered / totalCalled) * 100) : 0
   const prescreenRate = totalLeads > 0 ? Math.round((totalPrescreened / totalLeads) * 100) : 0
   const visitRate = totalLeads > 0 ? Math.round((totalVisitScheduled / totalLeads) * 100) : 0
+
+  // Calculate demographic distributions
+  const ageGroups = {
+    '50-60': studyPatients.filter(p => p.age >= 50 && p.age < 60).length,
+    '60-70': studyPatients.filter(p => p.age >= 60 && p.age < 70).length,
+    '70-80': studyPatients.filter(p => p.age >= 70 && p.age < 80).length,
+    '80+': studyPatients.filter(p => p.age >= 80).length,
+  }
+  const ageTotal = totalLeads
+  const agePercentages = {
+    '50-60': ageTotal > 0 ? Math.round((ageGroups['50-60'] / ageTotal) * 100) : 0,
+    '60-70': ageTotal > 0 ? Math.round((ageGroups['60-70'] / ageTotal) * 100) : 0,
+    '70-80': ageTotal > 0 ? Math.round((ageGroups['70-80'] / ageTotal) * 100) : 0,
+    '80+': ageTotal > 0 ? Math.round((ageGroups['80+'] / ageTotal) * 100) : 0,
+  }
+
+  const genderCounts = {
+    female: studyPatients.filter(p => p.gender?.toLowerCase() === 'female').length,
+    male: studyPatients.filter(p => p.gender?.toLowerCase() === 'male').length,
+  }
+  const genderPercentages = {
+    female: ageTotal > 0 ? Math.round((genderCounts.female / ageTotal) * 100) : 0,
+    male: ageTotal > 0 ? Math.round((genderCounts.male / ageTotal) * 100) : 0,
+  }
+
+  // Calculate call outcomes
+  const callOutcomes = {
+    qualified: studyPatients.filter(p => p.tag === 'Match' || p.tag === 'Eligible').length,
+    notQualified: studyPatients.filter(p => p.tag === 'Ineligible').length,
+    noAnswer: studyPatients.filter(p => p.status === 'No Answer').length,
+    voicemail: studyPatients.filter(p => p.status === 'Voicemail Left').length,
+    declined: studyPatients.filter(p => p.status === 'Declined').length,
+  }
+  const callOutcomeTotal = totalCalled > 0 ? totalCalled : 1
+  const callOutcomePercentages = {
+    qualified: Math.round((callOutcomes.qualified / callOutcomeTotal) * 100),
+    notQualified: Math.round((callOutcomes.notQualified / callOutcomeTotal) * 100),
+    noAnswer: Math.round((callOutcomes.noAnswer / callOutcomeTotal) * 100),
+    voicemail: Math.round((callOutcomes.voicemail / callOutcomeTotal) * 100),
+    declined: Math.round((callOutcomes.declined / callOutcomeTotal) * 100),
+  }
+
+  // Calculate call performance by time of day
+  const callsByHour: { [hour: number]: { total: number, answered: number } } = {}
+
+  // Initialize hours (6 AM to 10 PM)
+  for (let hour = 6; hour <= 22; hour++) {
+    callsByHour[hour] = { total: 0, answered: 0 }
+  }
+
+  // Count calls by hour
+  studyPatients.forEach(patient => {
+    patient.callHistory?.forEach(call => {
+      const hour = parseInt(call.callTime.split(':')[0])
+      if (callsByHour[hour] !== undefined) {
+        callsByHour[hour].total++
+        if (call.outcome === 'completed') {
+          callsByHour[hour].answered++
+        }
+      }
+    })
+  })
+
+  // Calculate answer rates by hour
+  const hourlyAnswerRates = Object.keys(callsByHour).map(hour => {
+    const hourNum = parseInt(hour)
+    const data = callsByHour[hourNum]
+    return {
+      hour: hourNum,
+      rate: data.total > 0 ? Math.round((data.answered / data.total) * 100) : 0
+    }
+  })
+
+  // Find best and worst times (only among hours with actual calls)
+  const hoursWithCalls = hourlyAnswerRates.filter(h => callsByHour[h.hour].total > 0)
+  const bestTime = hoursWithCalls.length > 0
+    ? hoursWithCalls.reduce((max, curr) => curr.rate > max.rate ? curr : max, hoursWithCalls[0])
+    : null
+  const worstTime = hoursWithCalls.length > 0
+    ? hoursWithCalls.reduce((min, curr) => curr.rate < min.rate ? curr : min, hoursWithCalls[0])
+    : null
+
+  // Calculate financial metrics
+  const costPerCall = 10 // Base cost per call attempt
+  const totalCampaignCost = totalCalled * costPerCall
+  const costPerAnswered = totalAnswered > 0 ? Math.round((totalCampaignCost / totalAnswered) * 100) / 100 : 0
+  const qualifiedPatients = studyPatients.filter(p => p.tag === 'Eligible' || p.tag === 'Match').length
+  const costPerQualified = qualifiedPatients > 0 ? Math.round((totalCampaignCost / qualifiedPatients) * 100) / 100 : 0
+  const enrolledPatients = studyPatients.filter(p => p.status === 'Enrolled' || p.visitScheduledDate).length
+  const costPerEnrolled = enrolledPatients > 0 ? Math.round((totalCampaignCost / enrolledPatients) * 100) / 100 : 0
+  const targetCostPerEnrolled = 120
+  const percentBelowTarget = costPerEnrolled > 0 ? Math.round(((targetCostPerEnrolled - costPerEnrolled) / targetCostPerEnrolled) * 100) : 0
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -157,10 +257,10 @@ export default function AnalyticsPage() {
                     <div className="h-3 w-3 rounded-full bg-green-500"></div>
                     <span className="text-sm font-medium">Completed & Qualified</span>
                   </div>
-                  <span className="text-sm font-bold">238 (28%)</span>
+                  <span className="text-sm font-bold">{callOutcomes.qualified} ({callOutcomePercentages.qualified}%)</span>
                 </div>
                 <div className="w-full bg-slate-100 rounded-full h-2">
-                  <div className="bg-green-500 h-2 rounded-full" style={{width: '28%'}}></div>
+                  <div className="bg-green-500 h-2 rounded-full" style={{width: `${callOutcomePercentages.qualified}%`}}></div>
                 </div>
               </div>
 
@@ -170,10 +270,10 @@ export default function AnalyticsPage() {
                     <div className="h-3 w-3 rounded-full bg-blue-500"></div>
                     <span className="text-sm font-medium">Completed & Not Qualified</span>
                   </div>
-                  <span className="text-sm font-bold">312 (37%)</span>
+                  <span className="text-sm font-bold">{callOutcomes.notQualified} ({callOutcomePercentages.notQualified}%)</span>
                 </div>
                 <div className="w-full bg-slate-100 rounded-full h-2">
-                  <div className="bg-blue-500 h-2 rounded-full" style={{width: '37%'}}></div>
+                  <div className="bg-blue-500 h-2 rounded-full" style={{width: `${callOutcomePercentages.notQualified}%`}}></div>
                 </div>
               </div>
 
@@ -183,10 +283,10 @@ export default function AnalyticsPage() {
                     <div className="h-3 w-3 rounded-full bg-slate-400"></div>
                     <span className="text-sm font-medium">No Answer</span>
                   </div>
-                  <span className="text-sm font-bold">185 (22%)</span>
+                  <span className="text-sm font-bold">{callOutcomes.noAnswer} ({callOutcomePercentages.noAnswer}%)</span>
                 </div>
                 <div className="w-full bg-slate-100 rounded-full h-2">
-                  <div className="bg-slate-400 h-2 rounded-full" style={{width: '22%'}}></div>
+                  <div className="bg-slate-400 h-2 rounded-full" style={{width: `${callOutcomePercentages.noAnswer}%`}}></div>
                 </div>
               </div>
 
@@ -196,10 +296,10 @@ export default function AnalyticsPage() {
                     <div className="h-3 w-3 rounded-full bg-amber-500"></div>
                     <span className="text-sm font-medium">Voicemail Left</span>
                   </div>
-                  <span className="text-sm font-bold">78 (9%)</span>
+                  <span className="text-sm font-bold">{callOutcomes.voicemail} ({callOutcomePercentages.voicemail}%)</span>
                 </div>
                 <div className="w-full bg-slate-100 rounded-full h-2">
-                  <div className="bg-amber-500 h-2 rounded-full" style={{width: '9%'}}></div>
+                  <div className="bg-amber-500 h-2 rounded-full" style={{width: `${callOutcomePercentages.voicemail}%`}}></div>
                 </div>
               </div>
 
@@ -209,10 +309,10 @@ export default function AnalyticsPage() {
                     <div className="h-3 w-3 rounded-full bg-red-500"></div>
                     <span className="text-sm font-medium">Declined Participation</span>
                   </div>
-                  <span className="text-sm font-bold">34 (4%)</span>
+                  <span className="text-sm font-bold">{callOutcomes.declined} ({callOutcomePercentages.declined}%)</span>
                 </div>
                 <div className="w-full bg-slate-100 rounded-full h-2">
-                  <div className="bg-red-500 h-2 rounded-full" style={{width: '4%'}}></div>
+                  <div className="bg-red-500 h-2 rounded-full" style={{width: `${callOutcomePercentages.declined}%`}}></div>
                 </div>
               </div>
             </div>
@@ -237,22 +337,23 @@ export default function AnalyticsPage() {
                   <div className="flex items-center justify-center mb-4">
                     <div className="relative w-48 h-48">
                       <svg viewBox="0 0 100 100" className="transform -rotate-90">
-                        {/* 50-60: 28% */}
+                        {/* Calculate stroke dasharray for each segment */}
+                        {/* 50-60 */}
                         <circle cx="50" cy="50" r="40" fill="none" stroke="#3b82f6" strokeWidth="20"
-                          strokeDasharray="70.4 251.2" strokeDashoffset="0" />
-                        {/* 60-70: 42% */}
+                          strokeDasharray={`${agePercentages['50-60'] * 2.512} 251.2`} strokeDashoffset="0" />
+                        {/* 60-70 */}
                         <circle cx="50" cy="50" r="40" fill="none" stroke="#60a5fa" strokeWidth="20"
-                          strokeDasharray="105.6 251.2" strokeDashoffset="-70.4" />
-                        {/* 70-80: 25% */}
+                          strokeDasharray={`${agePercentages['60-70'] * 2.512} 251.2`} strokeDashoffset={`-${agePercentages['50-60'] * 2.512}`} />
+                        {/* 70-80 */}
                         <circle cx="50" cy="50" r="40" fill="none" stroke="#93c5fd" strokeWidth="20"
-                          strokeDasharray="62.8 251.2" strokeDashoffset="-176" />
-                        {/* 80+: 5% */}
+                          strokeDasharray={`${agePercentages['70-80'] * 2.512} 251.2`} strokeDashoffset={`-${(agePercentages['50-60'] + agePercentages['60-70']) * 2.512}`} />
+                        {/* 80+ */}
                         <circle cx="50" cy="50" r="40" fill="none" stroke="#dbeafe" strokeWidth="20"
-                          strokeDasharray="12.56 251.2" strokeDashoffset="-238.8" />
+                          strokeDasharray={`${agePercentages['80+'] * 2.512} 251.2`} strokeDashoffset={`-${(agePercentages['50-60'] + agePercentages['60-70'] + agePercentages['70-80']) * 2.512}`} />
                       </svg>
                       <div className="absolute inset-0 flex items-center justify-center">
                         <div className="text-center">
-                          <p className="text-2xl font-bold text-slate-900">847</p>
+                          <p className="text-2xl font-bold text-slate-900">{ageTotal}</p>
                           <p className="text-xs text-slate-600">Total</p>
                         </div>
                       </div>
@@ -261,19 +362,19 @@ export default function AnalyticsPage() {
                   <div className="grid grid-cols-2 gap-2">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full bg-blue-600"></div>
-                      <span className="text-xs text-slate-600">50-60 (28%)</span>
+                      <span className="text-xs text-slate-600">50-60 ({agePercentages['50-60']}%)</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full bg-blue-400"></div>
-                      <span className="text-xs text-slate-600">60-70 (42%)</span>
+                      <span className="text-xs text-slate-600">60-70 ({agePercentages['60-70']}%)</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full bg-blue-300"></div>
-                      <span className="text-xs text-slate-600">70-80 (25%)</span>
+                      <span className="text-xs text-slate-600">70-80 ({agePercentages['70-80']}%)</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full bg-blue-100"></div>
-                      <span className="text-xs text-slate-600">80+ (5%)</span>
+                      <span className="text-xs text-slate-600">80+ ({agePercentages['80+']}%)</span>
                     </div>
                   </div>
                 </div>
@@ -284,16 +385,16 @@ export default function AnalyticsPage() {
                   <div className="flex items-center justify-center mb-4">
                     <div className="relative w-48 h-48">
                       <svg viewBox="0 0 100 100" className="transform -rotate-90">
-                        {/* Female: 58% */}
+                        {/* Female */}
                         <circle cx="50" cy="50" r="40" fill="none" stroke="#8b5cf6" strokeWidth="20"
-                          strokeDasharray="145.6 251.2" strokeDashoffset="0" />
-                        {/* Male: 42% */}
+                          strokeDasharray={`${genderPercentages.female * 2.512} 251.2`} strokeDashoffset="0" />
+                        {/* Male */}
                         <circle cx="50" cy="50" r="40" fill="none" stroke="#c4b5fd" strokeWidth="20"
-                          strokeDasharray="105.6 251.2" strokeDashoffset="-145.6" />
+                          strokeDasharray={`${genderPercentages.male * 2.512} 251.2`} strokeDashoffset={`-${genderPercentages.female * 2.512}`} />
                       </svg>
                       <div className="absolute inset-0 flex items-center justify-center">
                         <div className="text-center">
-                          <p className="text-2xl font-bold text-slate-900">847</p>
+                          <p className="text-2xl font-bold text-slate-900">{ageTotal}</p>
                           <p className="text-xs text-slate-600">Total</p>
                         </div>
                       </div>
@@ -302,11 +403,11 @@ export default function AnalyticsPage() {
                   <div className="grid grid-cols-2 gap-2">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full bg-purple-600"></div>
-                      <span className="text-xs text-slate-600">Female (58%)</span>
+                      <span className="text-xs text-slate-600">Female ({genderPercentages.female}%)</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full bg-purple-300"></div>
-                      <span className="text-xs text-slate-600">Male (42%)</span>
+                      <span className="text-xs text-slate-600">Male ({genderPercentages.male}%)</span>
                     </div>
                   </div>
                 </div>
@@ -347,23 +448,14 @@ export default function AnalyticsPage() {
 
                     {/* Bars */}
                     <div className="absolute inset-0 flex items-end justify-between gap-0.5 pb-8">
-                      <div className="flex-1 bg-blue-600 rounded-t" style={{height: '32%'}} title="6am: 32%"></div>
-                      <div className="flex-1 bg-blue-600 rounded-t" style={{height: '28%'}} title="7am: 28%"></div>
-                      <div className="flex-1 bg-blue-600 rounded-t" style={{height: '35%'}} title="8am: 35%"></div>
-                      <div className="flex-1 bg-blue-600 rounded-t" style={{height: '45%'}} title="9am: 45%"></div>
-                      <div className="flex-1 bg-blue-600 rounded-t" style={{height: '58%'}} title="10am: 58%"></div>
-                      <div className="flex-1 bg-blue-600 rounded-t" style={{height: '52%'}} title="11am: 52%"></div>
-                      <div className="flex-1 bg-blue-600 rounded-t" style={{height: '38%'}} title="12pm: 38%"></div>
-                      <div className="flex-1 bg-blue-600 rounded-t" style={{height: '42%'}} title="1pm: 42%"></div>
-                      <div className="flex-1 bg-blue-600 rounded-t" style={{height: '55%'}} title="2pm: 55%"></div>
-                      <div className="flex-1 bg-blue-600 rounded-t" style={{height: '65%'}} title="3pm: 65%"></div>
-                      <div className="flex-1 bg-blue-600 rounded-t" style={{height: '62%'}} title="4pm: 62%"></div>
-                      <div className="flex-1 bg-blue-600 rounded-t" style={{height: '48%'}} title="5pm: 48%"></div>
-                      <div className="flex-1 bg-blue-600 rounded-t" style={{height: '40%'}} title="6pm: 40%"></div>
-                      <div className="flex-1 bg-blue-600 rounded-t" style={{height: '35%'}} title="7pm: 35%"></div>
-                      <div className="flex-1 bg-blue-600 rounded-t" style={{height: '28%'}} title="8pm: 28%"></div>
-                      <div className="flex-1 bg-blue-600 rounded-t" style={{height: '22%'}} title="9pm: 22%"></div>
-                      <div className="flex-1 bg-blue-600 rounded-t" style={{height: '18%'}} title="10pm: 18%"></div>
+                      {hourlyAnswerRates.map((hourData) => (
+                        <div
+                          key={hourData.hour}
+                          className="flex-1 bg-blue-600 rounded-t"
+                          style={{height: `${hourData.rate}%`}}
+                          title={`${hourData.hour > 12 ? hourData.hour - 12 : hourData.hour}${hourData.hour >= 12 ? 'pm' : 'am'}: ${hourData.rate}%`}
+                        ></div>
+                      ))}
                     </div>
 
                     {/* X-axis labels */}
@@ -385,13 +477,17 @@ export default function AnalyticsPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
                       <p className="text-xs text-slate-600 mb-1">Best Time to Call</p>
-                      <p className="text-lg font-bold text-blue-900">2-4 PM</p>
-                      <p className="text-xs text-slate-600">65% answer rate</p>
+                      <p className="text-lg font-bold text-blue-900">
+                        {bestTime ? `${bestTime.hour > 12 ? bestTime.hour - 12 : bestTime.hour} ${bestTime.hour >= 12 ? 'PM' : 'AM'}` : 'N/A'}
+                      </p>
+                      <p className="text-xs text-slate-600">{bestTime ? `${bestTime.rate}% answer rate` : 'No data'}</p>
                     </div>
                     <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
                       <p className="text-xs text-slate-600 mb-1">Worst Time to Call</p>
-                      <p className="text-lg font-bold text-slate-900">10 PM</p>
-                      <p className="text-xs text-slate-600">18% answer rate</p>
+                      <p className="text-lg font-bold text-slate-900">
+                        {worstTime ? `${worstTime.hour > 12 ? worstTime.hour - 12 : worstTime.hour} ${worstTime.hour >= 12 ? 'PM' : 'AM'}` : 'N/A'}
+                      </p>
+                      <p className="text-xs text-slate-600">{worstTime ? `${worstTime.rate}% answer rate` : 'No data'}</p>
                     </div>
                   </div>
                 </div>
@@ -413,26 +509,36 @@ export default function AnalyticsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 bg-slate-50 rounded-lg">
                   <p className="text-xs text-slate-600 mb-1">Total Campaign Cost</p>
-                  <p className="text-2xl font-bold text-slate-900">$8,470</p>
+                  <p className="text-2xl font-bold text-slate-900">${totalCampaignCost.toLocaleString()}</p>
                 </div>
                 <div className="p-4 bg-slate-50 rounded-lg">
                   <p className="text-xs text-slate-600 mb-1">Cost per Call</p>
-                  <p className="text-2xl font-bold text-slate-900">$10</p>
+                  <p className="text-2xl font-bold text-slate-900">${costPerCall}</p>
                 </div>
                 <div className="p-4 bg-blue-50 rounded-lg">
                   <p className="text-xs text-blue-700 mb-1">Cost per Answered</p>
-                  <p className="text-2xl font-bold text-blue-900">$15.40</p>
+                  <p className="text-2xl font-bold text-blue-900">${costPerAnswered.toLocaleString()}</p>
                 </div>
                 <div className="p-4 bg-purple-50 rounded-lg">
                   <p className="text-xs text-purple-700 mb-1">Cost per Qualified</p>
-                  <p className="text-2xl font-bold text-purple-900">$56.85</p>
+                  <p className="text-2xl font-bold text-purple-900">${costPerQualified.toLocaleString()}</p>
                 </div>
               </div>
 
               <div className="p-4 bg-green-50 rounded-lg border border-green-200">
                 <p className="text-sm font-semibold text-green-900 mb-2">Cost per Enrolled Patient</p>
-                <p className="text-3xl font-bold text-green-900">$89.16</p>
-                <p className="text-xs text-green-700 mt-1">33% below target of $120</p>
+                <p className="text-3xl font-bold text-green-900">
+                  {enrolledPatients > 0 ? `$${costPerEnrolled.toLocaleString()}` : 'N/A'}
+                </p>
+                {enrolledPatients > 0 && percentBelowTarget > 0 && (
+                  <p className="text-xs text-green-700 mt-1">{percentBelowTarget}% below target of $120</p>
+                )}
+                {enrolledPatients > 0 && percentBelowTarget < 0 && (
+                  <p className="text-xs text-red-700 mt-1">{Math.abs(percentBelowTarget)}% above target of $120</p>
+                )}
+                {enrolledPatients === 0 && (
+                  <p className="text-xs text-slate-600 mt-1">No enrolled patients yet</p>
+                )}
               </div>
             </div>
           </CardContent>

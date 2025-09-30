@@ -20,8 +20,9 @@ export function EpicFHIRConnector({ onDataExtracted }: EpicFHIRConnectorProps) {
     // Simulate SlicerDicer export processing
     await new Promise(resolve => setTimeout(resolve, 2500))
 
-    // Simulate data extraction - Only eligible matches that pass ALL criteria
+    // Simulate data extraction - Mix of eligible, potential, and ineligible patients
     const mockPatients = [
+      // ELIGIBLE MATCHES (Pass ALL criteria)
       {
         id: 'P001',
         name: 'John Smith',
@@ -72,34 +73,46 @@ export function EpicFHIRConnector({ onDataExtracted }: EpicFHIRConnectorProps) {
         medications: ['Donepezil 5mg'],
         last_visit: '2025-09-19'
       },
+      // POTENTIAL MATCHES (Pass 60%+ but not all criteria)
       {
         id: 'P006',
-        name: 'Sarah Thompson',
-        age: 66,
+        name: 'Linda Wilson',
+        age: 68,
         gender: 'female',
-        diagnoses: ['Mild Cognitive Impairment'],
+        diagnoses: ['Alzheimer\'s Disease', 'History of TIA (3 years ago)'],
         mmse_score: 20,
-        medications: ['Rivastigmine 6mg'],
+        medications: ['Rivastigmine 9mg', 'Aspirin'],
         last_visit: '2025-09-21'
       },
       {
         id: 'P007',
-        name: 'David Martinez',
-        age: 68,
+        name: 'James Martinez',
+        age: 73,
         gender: 'male',
-        diagnoses: ['Early-stage Alzheimer\'s Disease'],
-        mmse_score: 25,
-        medications: ['Memantine 10mg'],
-        last_visit: '2025-09-23'
+        diagnoses: ['Moderate Alzheimer\'s Disease'],
+        mmse_score: 17,
+        medications: ['Memantine 20mg', 'Donepezil 10mg'],
+        last_visit: '2025-09-17'
       },
+      // INELIGIBLE (Fail key criteria)
       {
         id: 'P008',
-        name: 'Elizabeth Anderson',
+        name: 'Thomas Clark',
+        age: 45,
+        gender: 'male',
+        diagnoses: ['Early-onset Dementia'],
+        mmse_score: 20,
+        medications: ['Donepezil 10mg'],
+        last_visit: '2025-09-16'
+      },
+      {
+        id: 'P009',
+        name: 'Jennifer Lee',
         age: 71,
         gender: 'female',
-        diagnoses: ['Moderate Alzheimer\'s Disease'],
-        mmse_score: 18,
-        medications: ['Donepezil 10mg', 'Memantine 10mg'],
+        diagnoses: ['Alzheimer\'s Disease', 'Breast Cancer (remission)'],
+        mmse_score: 21,
+        medications: ['Rivastigmine 6mg', 'Tamoxifen'],
         last_visit: '2025-09-24'
       },
     ]

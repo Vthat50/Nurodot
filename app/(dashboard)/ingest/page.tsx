@@ -69,9 +69,13 @@ export default function IngestPage() {
   const handleSaveStudy = () => {
     if (!editedStudyInfo || !protocolFile || !extractedData) return
 
+    // Generate a unique ID with timestamp to avoid duplicates
+    const baseId = editedStudyInfo.title.replace(/\s+/g, '-').toUpperCase()
+    const uniqueId = `${baseId}-${Date.now()}`
+
     // Create new study from extracted and edited info
     const newStudy = {
-      id: editedStudyInfo.title.replace(/\s+/g, '-').toUpperCase(),
+      id: uniqueId,
       title: editedStudyInfo.title,
       description: editedStudyInfo.description,
       phase: editedStudyInfo.phase,

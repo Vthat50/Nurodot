@@ -47,9 +47,19 @@ import {
   PhoneCall,
   PhoneOff,
   PhoneIncoming,
-  Activity
+  Activity,
+  Brain,
+  Plus,
+  X,
+  Settings,
+  Smartphone,
+  RefreshCw
 } from "lucide-react"
+import { format, addDays, setHours, setMinutes, isSameDay, isAfter, isBefore } from "date-fns"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { AICallIntegration } from "@/components/ai-call-calendar-integration"
 
 const statusConfig = {
   not_contacted: { label: 'Not Contacted', color: 'bg-slate-100 text-slate-700', icon: Clock },
@@ -79,6 +89,55 @@ export default function CampaignDetailPage() {
   const [overrideTag, setOverrideTag] = useState<string>("")
   const [overrideStatus, setOverrideStatus] = useState<string>("")
   const [overrideReason, setOverrideReason] = useState("")
+  const [showAICallIntegration, setShowAICallIntegration] = useState(false)
+
+  // Calendar-specific state
+  interface TimeSlot {
+    id: string
+    date: Date
+    startTime: string
+    endTime: string
+    available: boolean
+    patientId?: string
+    patientName?: string
+    studyId?: string
+    status: 'available' | 'booked' | 'pending' | 'completed'
+  }
+
+  interface CalendarSettings {
+    defaultSlotDuration: number
+    bufferTime: number
+    workingHours: { start: string; end: string }
+    workingDays: string[]
+    maxSlotsPerDay: number
+    autoConfirm: boolean
+  }
+
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([])
+  const [showAddSlotDialog, setShowAddSlotDialog] = useState(false)
+  const [showSettingsDialog, setShowSettingsDialog] = useState(false)
+  const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [selectedPatientForBooking, setSelectedPatientForBooking] = useState<string | null>(null)
+  const [lastSyncTime, setLastSyncTime] = useState<Date>(new Date())
+  const [aiBookingsCount, setAiBookingsCount] = useState(0)
+
+  const [settings, setSettings] = useState<CalendarSettings>({
+    defaultSlotDuration: 30,
+    bufferTime: 15,
+    workingHours: { start: "09:00", end: "17:00" },
+    workingDays: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
+    maxSlotsPerDay: 10,
+    autoConfirm: true
+  })
+
+  const [newSlot, setNewSlot] = useState({
+    date: new Date(),
+    startTime: "09:00",
+    endTime: "09:30",
+    recurring: false,
+    recurringDays: 0
+  })
 
   // Load campaign by ID on mount
   useEffect(() => {
@@ -87,6 +146,149 @@ export default function CampaignDetailPage() {
       setCampaign(foundCampaign || null)
     }
   }, [campaignId, getCampaignById])
+
+  // Calendar utility functions
+  const generateMockSlots = () => {
+    const slots: TimeSlot[] = []
+    const date = selectedDate
+    const [startHour, startMin] = settings.workingHours.start.split(':').map(Number)
+    const [endHour, endMin] = settings.workingHours.end.split(':').map(Number)
+    let currentTime = setMinutes(setHours(date, startHour), startMin)
+    const endTime = setMinutes(setHours(date, endHour), endMin)
+
+    while (isBefore(currentTime, endTime)) {
+      const slotEndTime = new Date(currentTime.getTime() + settings.defaultSlotDuration * 60000)
+      const isBooked = Math.random() > 0.7
+
+      slots.push({
+        id: `slot_${currentTime.getTime()}`,
+        date: date,
+        startTime: format(currentTime, 'HH:mm'),
+        endTime: format(slotEndTime, 'HH:mm'),
+        available: !isBooked,
+        status: isBooked ? 'booked' : 'available',
+        ...(isBooked && {
+          patientId: `patient_${Math.floor(Math.random() * 100)}`,
+          patientName: campaign?.patients[Math.floor(Math.random() * (campaign?.patients.length || 1))]?.name || `Patient ${Math.floor(Math.random() * 100)}`,
+          studyId: campaign?.studyName || 'Study'
+        })
+      })
+
+      currentTime = new Date(slotEndTime.getTime() + settings.bufferTime * 60000)
+    }
+
+    setTimeSlots(slots)
+  }
+
+  const addTimeSlot = () => {
+    const { date, startTime, endTime, recurring, recurringDays } = newSlot
+    const slots: TimeSlot[] = []
+    const days = recurring ? recurringDays : 1
+
+    for (let i = 0; i < days; i++) {
+      const slotDate = addDays(date, i)
+      const dayName = format(slotDate, 'EEEE').toLowerCase()
+      if (!settings.workingDays.includes(dayName)) continue
+
+      slots.push({
+        id: `slot_${Date.now()}_${i}`,
+        date: slotDate,
+        startTime,
+        endTime,
+        available: true,
+        status: 'available'
+      })
+    }
+
+    setTimeSlots([...timeSlots, ...slots])
+    setShowAddSlotDialog(false)
+  }
+
+  const removeSlot = (slotId: string) => {
+    setTimeSlots(timeSlots.filter(slot => slot.id !== slotId))
+  }
+
+  const generateBulkSlots = () => {
+    const slots: TimeSlot[] = []
+    const daysToGenerate = 30
+
+    for (let d = 0; d < daysToGenerate; d++) {
+      const date = addDays(new Date(), d)
+      const dayName = format(date, 'EEEE').toLowerCase()
+      if (!settings.workingDays.includes(dayName)) continue
+
+      const [startHour, startMin] = settings.workingHours.start.split(':').map(Number)
+      const [endHour, endMin] = settings.workingHours.end.split(':').map(Number)
+      let currentTime = setMinutes(setHours(date, startHour), startMin)
+      const endTime = setMinutes(setHours(date, endHour), endMin)
+      let slotsForDay = 0
+
+      while (isBefore(currentTime, endTime) && slotsForDay < settings.maxSlotsPerDay) {
+        const slotEndTime = new Date(currentTime.getTime() + settings.defaultSlotDuration * 60000)
+
+        slots.push({
+          id: `slot_${date.getTime()}_${slotsForDay}`,
+          date: date,
+          startTime: format(currentTime, 'HH:mm'),
+          endTime: format(slotEndTime, 'HH:mm'),
+          available: true,
+          status: 'available'
+        })
+
+        currentTime = new Date(slotEndTime.getTime() + settings.bufferTime * 60000)
+        slotsForDay++
+      }
+    }
+
+    setTimeSlots(slots)
+  }
+
+  const getAvailableSlotCount = () => {
+    return timeSlots.filter(slot => isSameDay(slot.date, selectedDate) && slot.available).length
+  }
+
+  const getBookedSlotCount = () => {
+    return timeSlots.filter(slot => isSameDay(slot.date, selectedDate) && !slot.available).length
+  }
+
+  const bookPatientToSlot = (patientId: string, slotId: string) => {
+    const patient = campaign?.patients.find(p => p.id === patientId)
+    if (!patient) return
+
+    const updatedSlots = timeSlots.map(slot =>
+      slot.id === slotId ? {
+        ...slot,
+        available: false,
+        status: 'booked' as const,
+        patientId: patient.id,
+        patientName: patient.name,
+        studyId: campaign?.studyName
+      } : slot
+    )
+
+    setTimeSlots(updatedSlots)
+    setLastSyncTime(new Date())
+  }
+
+  const filteredSlots = timeSlots.filter(slot => isSameDay(slot.date, selectedDate)).sort((a, b) => a.startTime.localeCompare(b.startTime))
+
+  const confirmedPatients = campaign?.patients.filter(p => p.status === 'interested' || p.status === 'scheduled').map(p => ({
+    id: p.id,
+    name: p.name,
+    phone: p.phone,
+    study: campaign.studyName,
+    eligibilityScore: 85,
+    callDate: p.lastContactDate || new Date().toISOString().split('T')[0],
+    status: "confirmed" as const,
+    preferredTimes: ["morning", "afternoon"]
+  })) || []
+
+  // Load slots when date changes
+  useEffect(() => {
+    if (timeSlots.length === 0 && campaign) {
+      generateMockSlots()
+    }
+  }, [selectedDate, campaign])
 
   if (!campaign) {
     return (
@@ -415,6 +617,563 @@ export default function CampaignDetailPage() {
             </div>
           </CardContent>
         </Card>
+          </TabsContent>
+
+          {/* Calls Tab */}
+          <TabsContent value="calls" className="space-y-6 mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bot className="h-5 w-5 text-purple-600" />
+                  AI Call Transcripts & Analysis
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {campaign.patients.filter(p => p.status !== 'not_contacted').map((patient) => (
+                    <div key={patient.id} className="border rounded-lg p-4 bg-slate-50">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <h4 className="font-semibold text-slate-900">{patient.name}</h4>
+                          <p className="text-sm text-slate-600">
+                            {patient.lastContactDate ? `Last contact: ${patient.lastContactDate}` : 'No calls yet'}
+                          </p>
+                        </div>
+                        <Badge className={statusConfig[patient.status].color}>
+                          {statusConfig[patient.status].label}
+                        </Badge>
+                      </div>
+                      {patient.lastContactMethod === 'AI Call' && patient.notes && (
+                        <div className="p-3 bg-white rounded border border-slate-200 mb-3">
+                          <p className="text-xs font-semibold text-slate-700 mb-2">AI Call Summary:</p>
+                          <p className="text-sm text-slate-700">{patient.notes}</p>
+                        </div>
+                      )}
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline" onClick={() => handleInitiateAICall(patient)}>
+                          <Bot className="h-3 w-3 mr-1" />
+                          Initiate AI Call
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => router.push(`/ingest/patients/${patient.id}`)}>
+                          View Full Profile
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Calendar Tab */}
+          <TabsContent value="calendar" className="space-y-6 mt-6">
+            {/* Real-time Status Bar */}
+            <Card className="bg-blue-50 border-blue-200">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <span className="text-sm font-medium text-blue-800">Real-time Sync Active</span>
+                    </div>
+                    <div className="text-sm text-blue-600">
+                      Last updated: {lastSyncTime.toLocaleTimeString()}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <Smartphone className="h-4 w-4 text-blue-600" />
+                      <span className="text-sm text-blue-700">AI bookings today: {aiBookingsCount}</span>
+                    </div>
+                    <Badge variant="outline" className="bg-white text-blue-700">
+                      {getAvailableSlotCount()} slots available
+                    </Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Confirmed Patients Awaiting Scheduling */}
+            {confirmedPatients.length > 0 && (
+              <Card className="bg-green-50 border-green-200">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    Confirmed Patients Ready for Scheduling ({confirmedPatients.length})
+                  </CardTitle>
+                  <p className="text-sm text-green-700">
+                    These patients have confirmed their interest. Click on a patient, then click an available time slot below to book them.
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  {selectedPatientForBooking && (
+                    <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-blue-800">
+                          Patient selected: {confirmedPatients.find(p => p.id === selectedPatientForBooking)?.name}
+                        </span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setSelectedPatientForBooking(null)}
+                          className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                        >
+                          Cancel Selection
+                        </Button>
+                      </div>
+                      <p className="text-xs text-blue-600 mt-1">
+                        Click on an available time slot below to complete the booking.
+                      </p>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {confirmedPatients.map((patient) => (
+                      <div key={patient.id} className={`p-4 rounded-lg border ${
+                        selectedPatientForBooking === patient.id
+                          ? 'bg-blue-50 border-blue-300 ring-2 ring-blue-500 ring-offset-2'
+                          : 'bg-white border-green-200'
+                      }`}>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-medium text-green-900">{patient.name}</span>
+                          <Badge variant="outline" className="bg-green-100 text-green-800">
+                            {patient.eligibilityScore}% match
+                          </Badge>
+                        </div>
+                        <div className="text-sm text-green-700 space-y-1">
+                          <div>Study: {patient.study}</div>
+                          <div>Call: {patient.callDate}</div>
+                          <div>Prefers: {patient.preferredTimes.join(", ")}</div>
+                        </div>
+                        <Button
+                          size="sm"
+                          className={`w-full mt-3 ${
+                            selectedPatientForBooking === patient.id
+                              ? 'bg-blue-600 hover:bg-blue-700'
+                              : 'bg-green-600 hover:bg-green-700'
+                          }`}
+                          onClick={() => {
+                            if (selectedPatientForBooking === patient.id) {
+                              setSelectedPatientForBooking(null)
+                            } else {
+                              setSelectedPatientForBooking(patient.id)
+                            }
+                          }}
+                        >
+                          {selectedPatientForBooking === patient.id ? 'Cancel Selection' : 'Select Time Slot →'}
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Calendar View */}
+              <Card className="lg:col-span-1">
+                <CardHeader>
+                  <CardTitle>Select Date</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CalendarComponent
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(date) => date && setSelectedDate(date)}
+                    className="rounded-md border"
+                    disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                  />
+
+                  <div className="mt-4 space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Available Slots</span>
+                      <Badge variant="outline" className="bg-green-50">
+                        {getAvailableSlotCount()}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Booked Slots</span>
+                      <Badge variant="outline" className="bg-red-50">
+                        {getBookedSlotCount()}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 space-y-2">
+                    <Button
+                      className="w-full"
+                      onClick={() => setShowAddSlotDialog(true)}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Time Slot
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={generateBulkSlots}
+                    >
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Generate Bulk Slots
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setShowAICallIntegration(true)}
+                    >
+                      <Brain className="h-4 w-4 mr-2" />
+                      AI Auto-Schedule
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setShowSettingsDialog(true)}
+                    >
+                      <Settings className="h-4 w-4 mr-2" />
+                      Settings
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Time Slots */}
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>
+                      Time Slots for {format(selectedDate, 'MMMM d, yyyy')}
+                    </CardTitle>
+                    <Badge variant="outline">
+                      {format(selectedDate, 'EEEE')}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {loading ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      Loading slots...
+                    </div>
+                  ) : filteredSlots.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                      <p className="text-muted-foreground">No time slots for this date</p>
+                      <Button
+                        className="mt-4"
+                        onClick={() => setShowAddSlotDialog(true)}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add First Slot
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-[600px] overflow-y-auto">
+                      {filteredSlots.map((slot) => (
+                        <div
+                          key={slot.id}
+                          className={`p-4 rounded-lg border ${
+                            slot.available
+                              ? 'bg-green-50 border-green-200 hover:bg-green-100'
+                              : 'bg-gray-50 border-gray-200'
+                          } transition-colors cursor-pointer`}
+                          data-available={slot.available}
+                          onClick={() => {
+                            if (slot.available && selectedPatientForBooking) {
+                              const patient = confirmedPatients.find(p => p.id === selectedPatientForBooking)
+                              bookPatientToSlot(selectedPatientForBooking, slot.id)
+                              setSelectedPatientForBooking(null)
+                              if (patient) {
+                                alert(`✅ Successfully booked ${patient.name} for ${slot.startTime} - ${slot.endTime}`)
+                              }
+                            } else {
+                              setSelectedSlot(slot)
+                            }
+                          }}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <Clock className="h-4 w-4 text-muted-foreground" />
+                              <span className="font-medium">
+                                {slot.startTime} - {slot.endTime}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              {slot.available ? (
+                                <Badge variant="outline" className={`${
+                                  selectedPatientForBooking ? 'bg-blue-50 text-blue-700 animate-pulse' : 'bg-green-50 text-green-700'
+                                }`}>
+                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                  {selectedPatientForBooking ? 'Click to Book' : 'Available'}
+                                </Badge>
+                              ) : (
+                                <>
+                                  <Badge variant="outline" className="bg-red-50 text-red-700">
+                                    <Users className="h-3 w-3 mr-1" />
+                                    {slot.patientName}
+                                  </Badge>
+                                  <Badge variant="outline">
+                                    {slot.studyId}
+                                  </Badge>
+                                </>
+                              )}
+
+                              {slot.available && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    removeSlot(slot.id)
+                                  }}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Add Slot Dialog */}
+            <Dialog open={showAddSlotDialog} onOpenChange={setShowAddSlotDialog}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add Time Slot</DialogTitle>
+                </DialogHeader>
+
+                <div className="space-y-4">
+                  <div>
+                    <Label>Date</Label>
+                    <Input
+                      type="date"
+                      value={format(newSlot.date, 'yyyy-MM-dd')}
+                      onChange={(e) => setNewSlot({
+                        ...newSlot,
+                        date: new Date(e.target.value)
+                      })}
+                      min={format(new Date(), 'yyyy-MM-dd')}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Start Time</Label>
+                      <Input
+                        type="time"
+                        value={newSlot.startTime}
+                        onChange={(e) => setNewSlot({
+                          ...newSlot,
+                          startTime: e.target.value
+                        })}
+                      />
+                    </div>
+
+                    <div>
+                      <Label>End Time</Label>
+                      <Input
+                        type="time"
+                        value={newSlot.endTime}
+                        onChange={(e) => setNewSlot({
+                          ...newSlot,
+                          endTime: e.target.value
+                        })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={newSlot.recurring}
+                      onChange={(e) => setNewSlot({
+                        ...newSlot,
+                        recurring: e.target.checked
+                      })}
+                      className="rounded"
+                    />
+                    <Label>Recurring slot</Label>
+                  </div>
+
+                  {newSlot.recurring && (
+                    <div>
+                      <Label>Number of days</Label>
+                      <Input
+                        type="number"
+                        value={newSlot.recurringDays}
+                        onChange={(e) => setNewSlot({
+                          ...newSlot,
+                          recurringDays: parseInt(e.target.value)
+                        })}
+                        min="1"
+                        max="30"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-end gap-2 mt-4">
+                  <Button variant="outline" onClick={() => setShowAddSlotDialog(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={addTimeSlot}>
+                    Add Slot
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Settings Dialog */}
+            <Dialog open={showSettingsDialog} onOpenChange={setShowSettingsDialog}>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Calendar Settings</DialogTitle>
+                </DialogHeader>
+
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Default Slot Duration (minutes)</Label>
+                      <Input
+                        type="number"
+                        value={settings.defaultSlotDuration}
+                        onChange={(e) => setSettings({
+                          ...settings,
+                          defaultSlotDuration: parseInt(e.target.value)
+                        })}
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Buffer Time Between Slots (minutes)</Label>
+                      <Input
+                        type="number"
+                        value={settings.bufferTime}
+                        onChange={(e) => setSettings({
+                          ...settings,
+                          bufferTime: parseInt(e.target.value)
+                        })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Working Hours Start</Label>
+                      <Input
+                        type="time"
+                        value={settings.workingHours.start}
+                        onChange={(e) => setSettings({
+                          ...settings,
+                          workingHours: {
+                            ...settings.workingHours,
+                            start: e.target.value
+                          }
+                        })}
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Working Hours End</Label>
+                      <Input
+                        type="time"
+                        value={settings.workingHours.end}
+                        onChange={(e) => setSettings({
+                          ...settings,
+                          workingHours: {
+                            ...settings.workingHours,
+                            end: e.target.value
+                          }
+                        })}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Max Slots Per Day</Label>
+                    <Input
+                      type="number"
+                      value={settings.maxSlotsPerDay}
+                      onChange={(e) => setSettings({
+                        ...settings,
+                        maxSlotsPerDay: parseInt(e.target.value)
+                      })}
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={settings.autoConfirm}
+                      onChange={(e) => setSettings({
+                        ...settings,
+                        autoConfirm: e.target.checked
+                      })}
+                      className="rounded"
+                    />
+                    <Label>Auto-confirm appointments</Label>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 mt-4">
+                  <Button variant="outline" onClick={() => setShowSettingsDialog(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={() => setShowSettingsDialog(false)}>
+                    Save Settings
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Slot Details Dialog */}
+            {selectedSlot && (
+              <Dialog open={!!selectedSlot} onOpenChange={() => setSelectedSlot(null)}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Slot Details</DialogTitle>
+                  </DialogHeader>
+
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-muted-foreground">Time</Label>
+                      <p className="font-medium">
+                        {selectedSlot.startTime} - {selectedSlot.endTime}
+                      </p>
+                    </div>
+
+                    {selectedSlot.patientName && (
+                      <>
+                        <div>
+                          <Label className="text-muted-foreground">Patient</Label>
+                          <p className="font-medium">{selectedSlot.patientName}</p>
+                        </div>
+
+                        <div>
+                          <Label className="text-muted-foreground">Study</Label>
+                          <p className="font-medium">{selectedSlot.studyId}</p>
+                        </div>
+                      </>
+                    )}
+
+                    <div>
+                      <Label className="text-muted-foreground">Status</Label>
+                      <Badge className="mt-1">
+                        {selectedSlot.status}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end mt-4">
+                    <Button variant="outline" onClick={() => setSelectedSlot(null)}>
+                      Close
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
           </TabsContent>
 
           {/* Analytics Tab */}
@@ -939,6 +1698,39 @@ export default function CampaignDetailPage() {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* AI Call Calendar Integration Dialog */}
+      <AICallIntegration
+        isOpen={showAICallIntegration}
+        onClose={() => setShowAICallIntegration(false)}
+        eligiblePatients={campaign.patients
+          .filter(p => p.status === 'interested' || p.status === 'contacted')
+          .map(p => ({
+            id: p.id,
+            name: p.name,
+            phone: p.phone,
+            eligibilityScore: 85,
+            study: campaign.studyName,
+            callDate: p.lastContactDate || new Date().toISOString().split('T')[0],
+            aiAssessment: 'Qualified',
+            urgency: 'normal' as const,
+            preferences: {
+              preferredDays: ['Monday', 'Wednesday', 'Friday'],
+              preferredTimes: ['Morning', 'Afternoon'],
+              specialRequirements: 'Needs study partner present'
+            }
+          }))}
+        onSchedulePatients={(patientIds, settings) => {
+          // Update patient statuses to scheduled
+          patientIds.forEach(patientId => {
+            updatePatientStatus(campaignId, patientId, 'scheduled', 'Scheduled via AI auto-scheduling')
+          })
+          // Reload campaign
+          const updatedCampaign = getCampaignById(campaignId)
+          setCampaign(updatedCampaign || null)
+          setShowAICallIntegration(false)
+        }}
+      />
     </div>
   )
 }

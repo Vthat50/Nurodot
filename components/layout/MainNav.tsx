@@ -14,13 +14,21 @@ import {
   Filter,
   PhoneCall,
   BarChart3,
-  ChevronRight
+  ChevronRight,
+  ChevronDown,
+  Check
 } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 export function MainNav() {
   const pathname = usePathname()
   const router = useRouter()
-  const { currentStudy, studies } = useStudy()
+  const { currentStudy, studies, setCurrentStudy } = useStudy()
   const { campaigns } = useCampaign()
 
   const studyCampaigns = currentStudy
@@ -113,12 +121,44 @@ export function MainNav() {
           <h1 className="text-lg font-bold text-slate-900">Nurodot</h1>
         </div>
 
-        {currentStudy && (
-          <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-            <p className="text-xs text-slate-600 mb-1">Current Study</p>
-            <p className="text-sm font-semibold text-blue-900">{currentStudy.title}</p>
-            <p className="text-xs text-slate-600 mt-1">{currentStudy.phase}</p>
-          </div>
+        {studies.length > 0 && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="w-full p-3 bg-blue-50 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 text-left">
+                    <p className="text-xs text-slate-600 mb-1">Current Study</p>
+                    {currentStudy ? (
+                      <>
+                        <p className="text-sm font-semibold text-blue-900">{currentStudy.title}</p>
+                        <p className="text-xs text-slate-600 mt-1">{currentStudy.phase}</p>
+                      </>
+                    ) : (
+                      <p className="text-sm font-semibold text-slate-900">Select a study</p>
+                    )}
+                  </div>
+                  <ChevronDown className="h-4 w-4 text-slate-600 flex-shrink-0" />
+                </div>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="start">
+              {studies.map((study) => (
+                <DropdownMenuItem
+                  key={study.id}
+                  onClick={() => setCurrentStudy(study)}
+                  className="flex items-center justify-between cursor-pointer"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">{study.title}</p>
+                    <p className="text-xs text-slate-600">{study.phase}</p>
+                  </div>
+                  {currentStudy?.id === study.id && (
+                    <Check className="h-4 w-4 text-blue-600 flex-shrink-0 ml-2" />
+                  )}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
       </div>
 

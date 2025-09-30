@@ -140,7 +140,9 @@ export default function PatientsPage() {
       phone: p.phone || '(555) 000-0000',
       email: p.email || p.name.toLowerCase().replace(' ', '.') + '@email.com',
       conditions: p.diagnoses || [],
+      diagnoses: p.diagnoses || [],
       medications: p.medications || [],
+      mmse_score: p.mmse_score,
       source: 'EHR' as const,
       tag: 'Potential Match' as const,
       status: 'Pending Review' as const,
@@ -326,20 +328,28 @@ export default function PatientsPage() {
       const passedCount = criteriaMatches.filter(c => c.matched).length
       const totalCriteria = criteriaMatches.length
 
+      // Check if any critical/mandatory criteria failed
+      // Critical failures: age outside range, MMSE outside range, or has cancer
+      const hasCriticalFailure = !ageMatch || !mmseMatch || hasCancer
+
       // Determine tag based on criteria matching
       let tag: 'Match' | 'Potential Match' | 'Ineligible'
       let status: string
 
       if (matches) {
-        // Passes ALL criteria = "Match"
+        // Passes ALL criteria = "Match" (Eligible)
         tag = 'Match'
         status = 'Pending Review'
-      } else if (passedCount >= (totalCriteria * 0.6)) {
-        // Passes 60%+ of criteria = "Potential Match"
+      } else if (hasCriticalFailure) {
+        // Failed a critical criterion = "Ineligible" (Disqualified)
+        tag = 'Ineligible'
+        status = 'Failed Screening'
+      } else if (passedCount >= (totalCriteria * 0.75)) {
+        // Passes 75%+ of non-critical criteria = "Potential Match"
         tag = 'Potential Match'
         status = 'Pending Review'
       } else {
-        // Fails most criteria = "Ineligible"
+        // Fails too many criteria = "Ineligible"
         tag = 'Ineligible'
         status = 'Failed Screening'
       }
