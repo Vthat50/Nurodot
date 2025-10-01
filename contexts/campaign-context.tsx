@@ -69,12 +69,15 @@ const mockClarityADCampaign: Campaign = {
 
 export function CampaignProvider({ children }: { children: React.ReactNode }) {
   // Initialize campaigns from localStorage or use mock data
+  // Changed key to 'campaigns_v2' to force reload with correct phone number
   const [campaigns, setCampaigns] = useState<Campaign[]>(() => {
     if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('campaigns')
+      const stored = localStorage.getItem('campaigns_v2')
       if (stored) {
         return JSON.parse(stored)
       }
+      // Clear old cache
+      localStorage.removeItem('campaigns')
     }
     return [mockClarityADCampaign]
   })
@@ -84,7 +87,7 @@ export function CampaignProvider({ children }: { children: React.ReactNode }) {
   // Persist campaigns to localStorage whenever they change
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('campaigns', JSON.stringify(campaigns))
+      localStorage.setItem('campaigns_v2', JSON.stringify(campaigns))
     }
   }, [campaigns])
 
