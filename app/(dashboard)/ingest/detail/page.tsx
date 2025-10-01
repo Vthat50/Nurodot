@@ -130,106 +130,46 @@ export default function StudyDetailPage() {
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8 space-y-6">
-        {/* Enrollment Progress Card */}
-        <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-blue-600" />
-                Enrollment Progress
-              </span>
-              <span className="text-3xl font-bold text-blue-900">
-                {currentStudy.currentEnrollment} / {currentStudy.enrollmentTarget}
-              </span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Progress value={enrollmentProgress} className="h-3 mb-2" />
-            <p className="text-sm text-slate-600">
-              {enrollmentProgress.toFixed(0)}% complete • {currentStudy.enrollmentTarget - currentStudy.currentEnrollment} more patients needed
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Patient Pipeline - Key Metrics */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/ingest/detail/patients')}>
-            <CardContent className="p-6 text-center">
-              <Users className="h-8 w-8 text-slate-600 mx-auto mb-2" />
-              <p className="text-3xl font-bold text-slate-900">{totalImported}</p>
-              <p className="text-xs text-slate-600 mt-1">Imported</p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardContent className="p-6 text-center">
-              <FileText className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-              <p className="text-3xl font-bold text-purple-900">{preScreened}</p>
-              <p className="text-xs text-slate-600 mt-1">Pre-Screened</p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardContent className="p-6 text-center">
-              <CheckCircle className="h-8 w-8 text-green-600 mx-auto mb-2" />
-              <p className="text-3xl font-bold text-green-900">{qualified}</p>
-              <p className="text-xs text-slate-600 mt-1">Qualified</p>
-              <p className="text-xs text-green-700 font-semibold mt-1">{conversionRate}% conversion</p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardContent className="p-6 text-center">
-              <PhoneCall className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-              <p className="text-3xl font-bold text-blue-900">{contacted}</p>
-              <p className="text-xs text-slate-600 mt-1">Contacted</p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow border-green-200 bg-green-50">
-            <CardContent className="p-6 text-center">
-              <UserPlus className="h-8 w-8 text-green-600 mx-auto mb-2" />
-              <p className="text-3xl font-bold text-green-900">{enrolled}</p>
-              <p className="text-xs text-slate-600 mt-1">Enrolled</p>
-              <p className="text-xs text-green-700 font-semibold mt-1">{enrollmentRate}% enrollment</p>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Tabs for different sections */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="patients">Patients ({totalImported})</TabsTrigger>
             <TabsTrigger value="campaigns">Campaigns ({studyCampaigns.length})</TabsTrigger>
             <TabsTrigger value="criteria">Criteria</TabsTrigger>
+            <TabsTrigger value="documents">Documents</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Quick Actions */}
-              <Card>
+              {/* Enrollment Progress */}
+              <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-purple-50">
                 <CardHeader>
-                  <CardTitle className="text-lg">Quick Actions</CardTitle>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-blue-600" />
+                    Enrollment Progress
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2">
-                  <Button className="w-full justify-start" onClick={() => router.push('/ingest/patients')}>
-                    <Upload className="h-4 w-4 mr-2" />
-                    Import More Patients
-                  </Button>
-                  <Button className="w-full justify-start" variant="outline" onClick={() => router.push('/ingest/detail/patients')}>
-                    <Users className="h-4 w-4 mr-2" />
-                    View All Patients
-                  </Button>
-                  <Button className="w-full justify-start" variant="outline" onClick={() => router.push('/campaigns')}>
-                    <Target className="h-4 w-4 mr-2" />
-                    Create New Campaign
-                  </Button>
-                  <Button className="w-full justify-start" variant="outline">
-                    <FileText className="h-4 w-4 mr-2" />
-                    View Protocol
-                  </Button>
+                <CardContent className="space-y-3">
+                  <div className="flex items-end justify-between mb-2">
+                    <div>
+                      <p className="text-sm text-slate-600 mb-1">Current / Target</p>
+                      <p className="text-3xl font-bold text-blue-900">
+                        {currentStudy.currentEnrollment} / {currentStudy.enrollmentTarget}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-slate-600 mb-1">Completion</p>
+                      <p className="text-2xl font-bold text-purple-900">
+                        {enrollmentProgress.toFixed(0)}%
+                      </p>
+                    </div>
+                  </div>
+                  <Progress value={enrollmentProgress} className="h-3" />
+                  <p className="text-sm text-slate-600">
+                    {currentStudy.enrollmentTarget - currentStudy.currentEnrollment} more patients needed to reach target
+                  </p>
                 </CardContent>
               </Card>
 
@@ -260,54 +200,363 @@ export default function StudyDetailPage() {
               </Card>
             </div>
 
-            {/* Documents & Versions Card */}
-            <Card className="border-purple-200 bg-purple-50/30">
+            {/* Recruitment Funnel */}
+            <Card>
               <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-purple-600" />
-                  Documents & Versions
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Recruitment Funnel
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="p-4 bg-white rounded-lg border border-purple-200">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <FileText className="h-4 w-4 text-purple-600" />
-                        <p className="font-semibold text-slate-900">Study Protocol</p>
-                      </div>
-                      <p className="text-xs text-slate-600">CLARITY-AD-Protocol-v1.2.pdf</p>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+                  <div className="text-center">
+                    <div className="bg-blue-100 p-4 rounded-lg">
+                      <p className="text-2xl font-bold text-blue-600">{totalImported}</p>
+                      <p className="text-sm text-gray-600">Leads Ingested</p>
                     </div>
-                    <Badge className="bg-green-100 text-green-800 border-green-300">
-                      v1.2 Active
-                    </Badge>
                   </div>
-                  <div className="flex items-center justify-between text-xs text-slate-600 mb-3">
-                    <span>3 versions</span>
-                    <span>Last updated 2 days ago</span>
+                  <div className="text-center">
+                    <div className="bg-green-100 p-4 rounded-lg">
+                      <p className="text-2xl font-bold text-green-600">{contacted}</p>
+                      <p className="text-sm text-gray-600">Patients Called</p>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      {totalImported > 0 ? Math.round((contacted / totalImported) * 100) : 0}% conversion
+                    </p>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => router.push('/protocol')}
-                  >
-                    View Version History
-                  </Button>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <Button variant="outline" size="sm" onClick={() => router.push('/protocol')}>
-                    <Upload className="h-3 w-3 mr-2" />
-                    Upload New Version
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <FileText className="h-3 w-3 mr-2" />
-                    View Current
-                  </Button>
+                  <div className="text-center">
+                    <div className="bg-yellow-100 p-4 rounded-lg">
+                      <p className="text-2xl font-bold text-yellow-600">
+                        {studyPatients.filter(p => p.callHistory && p.callHistory.length > 0).length}
+                      </p>
+                      <p className="text-sm text-gray-600">Calls Completed</p>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      {contacted > 0 ? Math.round((studyPatients.filter(p => p.callHistory && p.callHistory.length > 0).length / contacted) * 100) : 0}% conversion
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <div className="bg-purple-100 p-4 rounded-lg">
+                      <p className="text-2xl font-bold text-purple-600">
+                        {studyPatients.filter(p => p.status === 'On-site visit scheduled' || p.visitScheduledDate).length}
+                      </p>
+                      <p className="text-sm text-gray-600">Visits Scheduled</p>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      {studyPatients.filter(p => p.callHistory && p.callHistory.length > 0).length > 0 ? Math.round((studyPatients.filter(p => p.status === 'On-site visit scheduled' || p.visitScheduledDate).length / studyPatients.filter(p => p.callHistory && p.callHistory.length > 0).length) * 100) : 0}% conversion
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <div className="bg-emerald-100 p-4 rounded-lg">
+                      <p className="text-2xl font-bold text-emerald-600">{enrolled}</p>
+                      <p className="text-sm text-gray-600">Enrolled</p>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      {studyPatients.filter(p => p.status === 'On-site visit scheduled' || p.visitScheduledDate).length > 0 ? Math.round((enrolled / studyPatients.filter(p => p.status === 'On-site visit scheduled' || p.visitScheduledDate).length) * 100) : 0}% conversion
+                    </p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
+
+            {/* Analytics Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Recruitment Blockers */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <AlertCircle className="h-5 w-5 text-red-600" />
+                    Recruitment Blockers
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {(() => {
+                    // Analyze exclusion criteria from patient data
+                    const exclusionReasons: { [key: string]: number } = {}
+                    studyPatients.forEach(p => {
+                      if (p.criteriaMatches) {
+                        p.criteriaMatches.forEach(cm => {
+                          if (cm.type === 'exclusion' && !cm.matched) {
+                            const reason = cm.criterionText
+                            exclusionReasons[reason] = (exclusionReasons[reason] || 0) + 1
+                          }
+                        })
+                      }
+                    })
+
+                    // Calculate leads data inconsistency - criteria not met in EHR but confirmed on call
+                    let mmseInconsistency = 0
+                    let studyPartnerInconsistency = 0
+                    studyPatients.forEach(p => {
+                      if (p.criteriaMatches) {
+                        p.criteriaMatches.forEach(cm => {
+                          // MMSE score mismatch example from Margaret Thompson
+                          if (cm.criterionText.includes('MMSE') && !cm.matched && cm.source === 'EHR') {
+                            mmseInconsistency++
+                          }
+                          // Study partner confirmed on call but not in EHR
+                          if (cm.criterionText.toLowerCase().includes('study partner') && cm.source === 'AI Call') {
+                            studyPartnerInconsistency++
+                          }
+                        })
+                      }
+                    })
+
+                    // Calculate call drop-off reasons from call history and transcripts
+                    let noAnswer = 0
+                    let voicemail = 0
+                    let declinedTimeCommitment = 0
+                    let declinedOther = 0
+                    let completed = 0
+                    studyPatients.forEach(p => {
+                      if (p.callHistory && p.callHistory.length > 0) {
+                        const lastCall = p.callHistory[p.callHistory.length - 1]
+                        if (lastCall.outcome === 'no_answer') noAnswer++
+                        else if (lastCall.outcome === 'voicemail') voicemail++
+                        else if (lastCall.outcome === 'declined') {
+                          // Check transcript for time commitment mention
+                          const hasTimeCommitmentMention = lastCall.messages?.some(m =>
+                            m.speaker === 'patient' && (
+                              m.text.toLowerCase().includes('time commitment') ||
+                              m.text.toLowerCase().includes('travel') ||
+                              m.text.toLowerCase().includes('commit to that')
+                            )
+                          )
+                          if (hasTimeCommitmentMention) {
+                            declinedTimeCommitment++
+                          } else {
+                            declinedOther++
+                          }
+                        }
+                        else if (lastCall.outcome === 'completed') completed++
+                      }
+                    })
+
+                    const topExclusions = Object.entries(exclusionReasons)
+                      .sort((a, b) => b[1] - a[1])
+                      .slice(0, 2)
+
+                    return (
+                      <div className="space-y-4">
+                        {/* Top Exclusion Criteria */}
+                        <div>
+                          <h4 className="text-sm font-semibold text-slate-700 mb-2">Top Exclusion Criteria</h4>
+                          <div className="space-y-1.5">
+                            {topExclusions.map(([reason, count]) => (
+                              <div key={reason} className="flex justify-between text-xs">
+                                <span className="text-slate-700 truncate pr-2">{reason}</span>
+                                <span className="font-medium text-red-600 flex-shrink-0">{count} patient{count > 1 ? 's' : ''}</span>
+                              </div>
+                            ))}
+                            {topExclusions.length === 0 && (
+                              <p className="text-xs text-slate-500 italic">No exclusion criteria violations found</p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Leads Data Inconsistency */}
+                        <div className="pt-3 border-t">
+                          <h4 className="text-sm font-semibold text-slate-700 mb-2">Leads Data Inconsistency</h4>
+                          <div className="space-y-1.5">
+                            {mmseInconsistency > 0 && (
+                              <div className="flex justify-between text-xs">
+                                <span className="text-slate-700">MMSE score mismatch (EHR vs screening)</span>
+                                <span className="font-medium text-amber-600">{mmseInconsistency} patient{mmseInconsistency > 1 ? 's' : ''}</span>
+                              </div>
+                            )}
+                            {studyPartnerInconsistency > 0 && (
+                              <div className="flex justify-between text-xs">
+                                <span className="text-slate-700">Study partner confirmed on call</span>
+                                <span className="font-medium text-amber-600">{studyPartnerInconsistency} patient{studyPartnerInconsistency > 1 ? 's' : ''}</span>
+                              </div>
+                            )}
+                            {mmseInconsistency === 0 && studyPartnerInconsistency === 0 && (
+                              <p className="text-xs text-slate-500 italic">No data inconsistencies detected</p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Call Drop-off Reasons */}
+                        <div className="pt-3 border-t">
+                          <h4 className="text-sm font-semibold text-slate-700 mb-2">Call Drop-off Reasons</h4>
+                          <div className="space-y-1.5">
+                            {noAnswer > 0 && (
+                              <div className="flex justify-between text-xs">
+                                <span className="text-slate-700">No answer</span>
+                                <span className="font-medium text-slate-600">{noAnswer} patient{noAnswer > 1 ? 's' : ''}</span>
+                              </div>
+                            )}
+                            {voicemail > 0 && (
+                              <div className="flex justify-between text-xs">
+                                <span className="text-slate-700">Voicemail left</span>
+                                <span className="font-medium text-slate-600">{voicemail} patient{voicemail > 1 ? 's' : ''}</span>
+                              </div>
+                            )}
+                            {declinedTimeCommitment > 0 && (
+                              <div className="flex justify-between text-xs">
+                                <span className="text-slate-700">Declined - Time commitment concerns</span>
+                                <span className="font-medium text-slate-600">{declinedTimeCommitment} patient{declinedTimeCommitment > 1 ? 's' : ''}</span>
+                              </div>
+                            )}
+                            {declinedOther > 0 && (
+                              <div className="flex justify-between text-xs">
+                                <span className="text-slate-700">Declined - Other reasons</span>
+                                <span className="font-medium text-slate-600">{declinedOther} patient{declinedOther > 1 ? 's' : ''}</span>
+                              </div>
+                            )}
+                            {noAnswer === 0 && voicemail === 0 && declinedTimeCommitment === 0 && declinedOther === 0 && (
+                              <p className="text-xs text-slate-500 italic">No call drop-offs detected</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })()}
+                </CardContent>
+              </Card>
+
+              {/* Demographics Distribution */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-blue-600" />
+                    Demographics
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {(() => {
+                    const eligibleOrScheduled = studyPatients.filter(p =>
+                      p.tag === 'Eligible' || p.tag === 'Match' || p.tag === 'Potential Match' ||
+                      p.status === 'On-site visit scheduled' || p.status === 'Enrolled'
+                    )
+                    const total = eligibleOrScheduled.length
+
+                    const ageCounts = {
+                      '18-35': eligibleOrScheduled.filter(p => p.age >= 18 && p.age <= 35).length,
+                      '36-50': eligibleOrScheduled.filter(p => p.age >= 36 && p.age <= 50).length,
+                      '51-65': eligibleOrScheduled.filter(p => p.age >= 51 && p.age <= 65).length,
+                      '65+': eligibleOrScheduled.filter(p => p.age > 65).length,
+                    }
+
+                    const genderCounts = {
+                      'Female': eligibleOrScheduled.filter(p => p.gender?.toLowerCase() === 'female').length,
+                      'Male': eligibleOrScheduled.filter(p => p.gender?.toLowerCase() === 'male').length,
+                    }
+
+                    // Calculate percentages
+                    const agePercentages = Object.fromEntries(
+                      Object.entries(ageCounts).map(([key, count]) => [key, total > 0 ? (count / total) * 100 : 0])
+                    )
+
+                    const genderPercentages = Object.fromEntries(
+                      Object.entries(genderCounts).map(([key, count]) => [key, total > 0 ? (count / total) * 100 : 0])
+                    )
+
+                    // Calculate stroke-dasharray values for pie chart (circumference = 2πr = 251.2 for r=40)
+                    const circumference = 251.2
+                    let ageOffset = 0
+                    const ageSegments = Object.entries(agePercentages).map(([key, pct], idx) => {
+                      const dashLength = (pct / 100) * circumference
+                      const segment = { key, pct, dashLength, offset: ageOffset }
+                      ageOffset -= dashLength
+                      return segment
+                    })
+
+                    let genderOffset = 0
+                    const genderSegments = Object.entries(genderPercentages).map(([key, pct]) => {
+                      const dashLength = (pct / 100) * circumference
+                      const segment = { key, pct, dashLength, offset: genderOffset }
+                      genderOffset -= dashLength
+                      return segment
+                    })
+
+                    const ageColors = ['#3b82f6', '#60a5fa', '#93c5fd', '#dbeafe']
+                    const genderColors = ['#8b5cf6', '#c4b5fd']
+
+                    return (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Age Distribution Pie Chart */}
+                        <div>
+                          <p className="text-sm font-semibold text-slate-700 mb-3">Age Groups</p>
+                          <div className="flex items-center justify-center mb-3">
+                            <div className="relative w-32 h-32">
+                              <svg viewBox="0 0 100 100" className="transform -rotate-90">
+                                {ageSegments.map((seg, idx) => (
+                                  <circle
+                                    key={seg.key}
+                                    cx="50"
+                                    cy="50"
+                                    r="40"
+                                    fill="none"
+                                    stroke={ageColors[idx]}
+                                    strokeWidth="20"
+                                    strokeDasharray={`${seg.dashLength} ${circumference}`}
+                                    strokeDashoffset={seg.offset}
+                                  />
+                                ))}
+                              </svg>
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="text-center">
+                                  <p className="text-xl font-bold text-slate-900">{total}</p>
+                                  <p className="text-xs text-slate-600">Total</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-1.5">
+                            {Object.entries(ageCounts).map(([ageGroup, count], idx) => (
+                              <div key={ageGroup} className="flex items-center gap-1.5">
+                                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: ageColors[idx] }}></div>
+                                <span className="text-xs text-slate-600">{ageGroup} ({Math.round(agePercentages[ageGroup])}%)</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Gender Distribution Pie Chart */}
+                        <div>
+                          <p className="text-sm font-semibold text-slate-700 mb-3">Gender</p>
+                          <div className="flex items-center justify-center mb-3">
+                            <div className="relative w-32 h-32">
+                              <svg viewBox="0 0 100 100" className="transform -rotate-90">
+                                {genderSegments.map((seg, idx) => (
+                                  <circle
+                                    key={seg.key}
+                                    cx="50"
+                                    cy="50"
+                                    r="40"
+                                    fill="none"
+                                    stroke={genderColors[idx]}
+                                    strokeWidth="20"
+                                    strokeDasharray={`${seg.dashLength} ${circumference}`}
+                                    strokeDashoffset={seg.offset}
+                                  />
+                                ))}
+                              </svg>
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="text-center">
+                                  <p className="text-xl font-bold text-slate-900">{total}</p>
+                                  <p className="text-xs text-slate-600">Total</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-1.5">
+                            {Object.entries(genderCounts).map(([gender, count], idx) => (
+                              <div key={gender} className="flex items-center gap-1.5">
+                                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: genderColors[idx] }}></div>
+                                <span className="text-xs text-slate-600">{gender} ({Math.round(genderPercentages[gender])}%)</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })()}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Patients Tab */}
@@ -520,248 +769,58 @@ export default function StudyDetailPage() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Documents Tab */}
+          <TabsContent value="documents">
+            <Card className="border-purple-200 bg-purple-50/30">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-purple-600" />
+                  Documents & Versions
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="p-4 bg-white rounded-lg border border-purple-200">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <FileText className="h-4 w-4 text-purple-600" />
+                        <p className="font-semibold text-slate-900">Study Protocol</p>
+                      </div>
+                      <p className="text-xs text-slate-600">CLARITY-AD-Protocol-v1.2.pdf</p>
+                    </div>
+                    <Badge className="bg-green-100 text-green-800 border-green-300">
+                      v1.2 Active
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-slate-600 mb-3">
+                    <span>3 versions</span>
+                    <span>Last updated 2 days ago</span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => router.push('/protocol')}
+                  >
+                    View Version History
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <Button variant="outline" size="sm" onClick={() => router.push('/protocol')}>
+                    <Upload className="h-3 w-3 mr-2" />
+                    Upload New Version
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <FileText className="h-3 w-3 mr-2" />
+                    View Current
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
-
-        {/* Detailed Analytics Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Recruitment Funnel - {currentStudy.title}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {(() => {
-              const leads = totalImported
-              const called = contacted
-              const answered = studyPatients.filter(p => p.callHistory && p.callHistory.length > 0).length
-              const prescreened = preScreened
-              const visitScheduled = studyPatients.filter(p =>
-                p.status === 'On-site visit scheduled' || p.visitScheduledDate
-              ).length
-
-              return (
-                <div className="space-y-4">
-                  {/* Horizontal Funnel Chart */}
-                  <div className="grid grid-cols-5 gap-2">
-                    <div className="text-center">
-                      <div className="bg-slate-100 p-3 rounded-l-lg border border-slate-300">
-                        <div className="text-xl font-bold text-slate-800">{leads}</div>
-                        <div className="text-xs text-slate-700">Leads</div>
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <div className="bg-gray-100 p-3 border border-slate-300">
-                        <div className="text-xl font-bold text-gray-800">{called}</div>
-                        <div className="text-xs text-gray-700">Called</div>
-                        <div className="text-xs mt-1 text-gray-600">
-                          {leads > 0 ? Math.round((called / leads) * 100) : 0}%
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <div className="bg-zinc-100 p-3 border border-slate-300">
-                        <div className="text-xl font-bold text-zinc-800">{answered}</div>
-                        <div className="text-xs text-zinc-700">Answered</div>
-                        <div className="text-xs mt-1 text-zinc-600">
-                          {called > 0 ? Math.round((answered / called) * 100) : 0}%
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <div className="bg-stone-100 p-3 border border-slate-300">
-                        <div className="text-xl font-bold text-stone-800">{prescreened}</div>
-                        <div className="text-xs text-stone-700">Prescreened</div>
-                        <div className="text-xs mt-1 text-stone-600">
-                          {answered > 0 ? Math.round((prescreened / answered) * 100) : 0}%
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <div className="bg-emerald-100 p-3 rounded-r-lg border border-slate-300">
-                        <div className="text-xl font-bold text-emerald-800">{visitScheduled}</div>
-                        <div className="text-xs text-emerald-700">Visit Scheduled</div>
-                        <div className="text-xs mt-1 text-emerald-600">
-                          {prescreened > 0 ? Math.round((visitScheduled / prescreened) * 100) : 0}%
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Recruitment Metrics */}
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <div className="bg-blue-50 p-3 rounded border border-blue-200">
-                      <div className="text-blue-700 font-medium text-lg">
-                        {called > 0 ? Math.round((answered / called) * 100) : 0}%
-                      </div>
-                      <div className="text-blue-600">Call Answer Rate</div>
-                    </div>
-                    <div className="bg-green-50 p-3 rounded border border-green-200">
-                      <div className="text-green-700 font-medium text-lg">
-                        {answered > 0 ? Math.round((prescreened / answered) * 100) : 0}%
-                      </div>
-                      <div className="text-green-600">Prescreening Pass Rate</div>
-                    </div>
-                    <div className="bg-purple-50 p-3 rounded border border-purple-200">
-                      <div className="text-purple-700 font-medium text-lg">
-                        {prescreened > 0 ? Math.round((visitScheduled / prescreened) * 100) : 0}%
-                      </div>
-                      <div className="text-purple-600">Visit Scheduling Rate</div>
-                    </div>
-                  </div>
-                </div>
-              )
-            })()}
-          </CardContent>
-        </Card>
-
-        {/* Analytics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Top Exclusionary Criteria */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertCircle className="h-5 w-5" />
-                Top Exclusions
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="truncate">Age outside range</span>
-                    <span className="font-medium text-red-600">
-                      {totalImported > 0 ? Math.round((studyPatients.filter(p => p.age < 18 || p.age > 65).length / totalImported) * 100) : 0}%
-                    </span>
-                  </div>
-                  <Progress
-                    value={totalImported > 0 ? (studyPatients.filter(p => p.age < 18 || p.age > 65).length / totalImported) * 100 : 0}
-                    className="h-2 bg-gray-200"
-                  />
-                </div>
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="truncate">Medical condition required</span>
-                    <span className="font-medium text-red-600">
-                      {Math.round(studyPatients.filter(p => p.tag === 'Ineligible').length * 0.6 / totalImported * 100) || 0}%
-                    </span>
-                  </div>
-                  <Progress value={studyPatients.filter(p => p.tag === 'Ineligible').length * 0.6 / totalImported * 100 || 0} className="h-2 bg-gray-200" />
-                </div>
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="truncate">Medication contraindication</span>
-                    <span className="font-medium text-red-600">
-                      {Math.round(studyPatients.filter(p => p.tag === 'Ineligible').length * 0.3 / totalImported * 100) || 0}%
-                    </span>
-                  </div>
-                  <Progress value={studyPatients.filter(p => p.tag === 'Ineligible').length * 0.3 / totalImported * 100 || 0} className="h-2 bg-gray-200" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Demographics Distribution */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Demographics
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {(() => {
-                const eligibleOrScheduled = studyPatients.filter(p =>
-                  p.tag === 'Eligible' || p.tag === 'Match' || p.tag === 'Potential Match' ||
-                  p.status === 'On-site visit scheduled' || p.status === 'Enrolled'
-                )
-                const ageGroups = {
-                  '18-35': eligibleOrScheduled.filter(p => p.age >= 18 && p.age <= 35).length,
-                  '36-50': eligibleOrScheduled.filter(p => p.age >= 36 && p.age <= 50).length,
-                  '51-65': eligibleOrScheduled.filter(p => p.age >= 51 && p.age <= 65).length,
-                  '65+': eligibleOrScheduled.filter(p => p.age > 65).length,
-                }
-                const genderDist = {
-                  'Male': eligibleOrScheduled.filter(p => p.gender?.toLowerCase() === 'male').length,
-                  'Female': eligibleOrScheduled.filter(p => p.gender?.toLowerCase() === 'female').length,
-                }
-                return (
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="font-medium mb-3 text-sm">Age Distribution (Eligible/Scheduled)</h4>
-                      <div className="space-y-2">
-                        {Object.entries(ageGroups).map(([ageGroup, count]) => (
-                          <div key={ageGroup} className="flex justify-between text-sm">
-                            <span>{ageGroup}</span>
-                            <span className="font-medium">{count}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="font-medium mb-3 text-sm">Gender</h4>
-                      <div className="space-y-2">
-                        {Object.entries(genderDist).map(([gender, count]) => (
-                          <div key={gender} className="flex justify-between text-sm">
-                            <span>{gender}</span>
-                            <span className="font-medium">{count}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )
-              })()}
-            </CardContent>
-          </Card>
-
-          {/* Call Performance */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <PhoneCall className="h-5 w-5" />
-                Call Performance
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {(() => {
-                const allCallHistories = studyPatients.flatMap(p => p.callHistory || [])
-                const totalCalls = allCallHistories.length
-                const answeredCalls = allCallHistories.filter(c => c.outcome === 'answered' || c.duration).length
-                const answerRate = totalCalls > 0 ? Math.round((answeredCalls / totalCalls) * 100) : 0
-                const callsWithDuration = allCallHistories.filter(c => c.duration)
-                const avgDuration = callsWithDuration.length > 0
-                  ? (callsWithDuration.reduce((sum, c) => sum + (c.duration || 0), 0) / callsWithDuration.length / 60).toFixed(1)
-                  : 0
-                return (
-                  <div className="space-y-4">
-                    <div>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span>Answer Rate</span>
-                        <span className="font-medium">{answerRate}%</span>
-                      </div>
-                      <Progress value={answerRate} className="h-2 bg-gray-200" />
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-600">Best Call Times</div>
-                      <div className="text-lg font-semibold">Weekdays 10-12 AM</div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <div className="text-gray-600">Avg Duration</div>
-                        <div className="font-medium">{avgDuration} min</div>
-                      </div>
-                      <div>
-                        <div className="text-gray-600">Total Calls</div>
-                        <div className="font-medium">{totalCalls}</div>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })()}
-            </CardContent>
-          </Card>
-        </div>
       </main>
     </div>
   )
