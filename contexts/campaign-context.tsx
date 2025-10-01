@@ -2,6 +2,18 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
 
+export interface CallTranscript {
+  id: string
+  patientId: string
+  patientName: string
+  callDate: string
+  callTime: string
+  duration: string
+  transcript: string
+  summary?: string
+  outcome?: 'interested' | 'not_interested' | 'needs_followup' | 'scheduled'
+}
+
 export interface CampaignPatient {
   id: string
   name: string
@@ -14,6 +26,7 @@ export interface CampaignPatient {
   lastContactMethod?: 'phone' | 'email' | 'ai_call' | 'portal'
   notes?: string
   scheduledDate?: string
+  transcript?: string
 }
 
 export interface Campaign {
@@ -23,6 +36,7 @@ export interface Campaign {
   name: string
   createdDate: string
   patients: CampaignPatient[]
+  transcripts?: CallTranscript[]
   totalPatients: number
   contacted: number
   interested: number
@@ -38,6 +52,9 @@ interface CampaignContextType {
   createCampaign: (campaign: Campaign) => void
   addPatientToCampaign: (campaignId: string, patient: CampaignPatient) => void
   updatePatientStatus: (campaignId: string, patientId: string, status: CampaignPatient['status'], notes?: string) => void
+  addTranscript: (campaignId: string, transcript: CallTranscript) => void
+  updateTranscript: (campaignId: string, transcriptId: string, updates: Partial<CallTranscript>) => void
+  deleteTranscript: (campaignId: string, transcriptId: string) => void
 }
 
 const CampaignContext = createContext<CampaignContextType | undefined>(undefined)
@@ -60,6 +77,7 @@ const mockClarityADCampaign: Campaign = {
       status: 'not_contacted',
     }
   ],
+  transcripts: [],
   totalPatients: 1,
   contacted: 0,
   interested: 0,
@@ -200,6 +218,47 @@ export function CampaignProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const addTranscript = (campaignId: string, transcript: CallTranscript) => {
+    setCampaigns(prevCampaigns =>
+      prevCampaigns.map(campaign =>
+        campaign.id === campaignId
+          ? {
+              ...campaign,
+              transcripts: [...(campaign.transcripts || []), transcript]
+            }
+          : campaign
+      )
+    )
+  }
+
+  const updateTranscript = (campaignId: string, transcriptId: string, updates: Partial<CallTranscript>) => {
+    setCampaigns(prevCampaigns =>
+      prevCampaigns.map(campaign =>
+        campaign.id === campaignId
+          ? {
+              ...campaign,
+              transcripts: (campaign.transcripts || []).map(t =>
+                t.id === transcriptId ? { ...t, ...updates } : t
+              )
+            }
+          : campaign
+      )
+    )
+  }
+
+  const deleteTranscript = (campaignId: string, transcriptId: string) => {
+    setCampaigns(prevCampaigns =>
+      prevCampaigns.map(campaign =>
+        campaign.id === campaignId
+          ? {
+              ...campaign,
+              transcripts: (campaign.transcripts || []).filter(t => t.id !== transcriptId)
+            }
+          : campaign
+      )
+    )
+  }
+
   return (
     <CampaignContext.Provider value={{
       campaigns,
@@ -209,6 +268,9 @@ export function CampaignProvider({ children }: { children: React.ReactNode }) {
       createCampaign,
       addPatientToCampaign,
       updatePatientStatus,
+      addTranscript,
+      updateTranscript,
+      deleteTranscript,
     }}>
       {children}
     </CampaignContext.Provider>

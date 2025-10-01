@@ -632,18 +632,34 @@ export default function CampaignDetailPage() {
           <TabsContent value="calls" className="space-y-6 mt-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bot className="h-5 w-5 text-purple-600" />
-                  AI Call Transcripts & Analysis
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Bot className="h-5 w-5 text-purple-600" />
+                    Configure Campaign
+                  </div>
+                  <Button onClick={() => {
+                    const allPatients = campaign.patients.filter(p => p.phone && p.phone !== '(555) 123-4567')
+                    if (allPatients.length === 0) {
+                      alert('No patients with valid phone numbers to call')
+                      return
+                    }
+                    Promise.all(allPatients.map(patient => handleInitiateAICall(patient)))
+                      .then(() => alert(`✅ Initiated ${allPatients.length} AI calls successfully`))
+                      .catch(err => alert(`❌ Error initiating bulk calls: ${err.message}`))
+                  }}>
+                    <Phone className="h-4 w-4 mr-2" />
+                    Send Bulk Call
+                  </Button>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {campaign.patients.filter(p => p.status !== 'not_contacted').map((patient) => (
+                  {campaign.patients.map((patient) => (
                     <div key={patient.id} className="border rounded-lg p-4 bg-slate-50">
                       <div className="flex items-center justify-between mb-3">
                         <div>
                           <h4 className="font-semibold text-slate-900">{patient.name}</h4>
+                          <p className="text-sm text-slate-600">Phone: {patient.phone}</p>
                           <p className="text-sm text-slate-600">
                             {patient.lastContactDate ? `Last contact: ${patient.lastContactDate}` : 'No calls yet'}
                           </p>
@@ -652,7 +668,32 @@ export default function CampaignDetailPage() {
                           {statusConfig[patient.status].label}
                         </Badge>
                       </div>
-                      {patient.lastContactMethod === 'AI Call' && patient.notes && (
+                      {patient.transcript && (
+                        <div className="p-3 bg-white rounded border border-slate-200 mb-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-xs font-semibold text-slate-700">Screening Transcript:</p>
+                            <div className="flex gap-2">
+                              <Button size="sm" variant="ghost" onClick={() => {
+                                const newTranscript = prompt('Edit transcript:', patient.transcript)
+                                if (newTranscript !== null) {
+                                  updatePatientStatus(campaignId, patient.id, patient.status, newTranscript)
+                                }
+                              }}>
+                                Edit
+                              </Button>
+                              <Button size="sm" variant="ghost" onClick={() => {
+                                if (confirm('Delete this transcript?')) {
+                                  updatePatientStatus(campaignId, patient.id, patient.status, '')
+                                }
+                              }}>
+                                Delete
+                              </Button>
+                            </div>
+                          </div>
+                          <p className="text-sm text-slate-700 whitespace-pre-wrap">{patient.transcript}</p>
+                        </div>
+                      )}
+                      {patient.notes && (
                         <div className="p-3 bg-white rounded border border-slate-200 mb-3">
                           <p className="text-xs font-semibold text-slate-700 mb-2">AI Call Summary:</p>
                           <p className="text-sm text-slate-700">{patient.notes}</p>
@@ -661,8 +702,19 @@ export default function CampaignDetailPage() {
                       <div className="flex gap-2">
                         <Button size="sm" variant="outline" onClick={() => handleInitiateAICall(patient)}>
                           <Bot className="h-3 w-3 mr-1" />
-                          Initiate AI Call
+                          AI Call
                         </Button>
+                        {!patient.transcript && (
+                          <Button size="sm" variant="outline" onClick={() => {
+                            const newTranscript = prompt('Add screening transcript for ' + patient.name + ':')
+                            if (newTranscript) {
+                              updatePatientStatus(campaignId, patient.id, patient.status, newTranscript)
+                            }
+                          }}>
+                            <Plus className="h-3 w-3 mr-1" />
+                            Add Transcript
+                          </Button>
+                        )}
                         <Button size="sm" variant="outline" onClick={() => router.push(`/ingest/patients/${patient.id}`)}>
                           View Full Profile
                         </Button>
