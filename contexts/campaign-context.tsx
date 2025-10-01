@@ -94,28 +94,34 @@ const mockClarityADCampaign: Campaign = {
 }
 
 export function CampaignProvider({ children }: { children: React.ReactNode }) {
-  // Initialize campaigns from localStorage or use mock data
-  // Changed key to 'campaigns_v2' to force reload with correct phone number
-  const [campaigns, setCampaigns] = useState<Campaign[]>(() => {
+  // Initialize campaigns with mock data to avoid hydration mismatch
+  const [campaigns, setCampaigns] = useState<Campaign[]>([mockClarityADCampaign])
+  const [currentCampaign, setCurrentCampaign] = useState<Campaign | null>(null)
+  const [isInitialized, setIsInitialized] = useState(false)
+
+  // Load from localStorage after mount to avoid hydration mismatch
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('campaigns_v2')
       if (stored) {
-        return JSON.parse(stored)
+        try {
+          setCampaigns(JSON.parse(stored))
+        } catch (e) {
+          console.error('Failed to parse campaigns from localStorage:', e)
+        }
       }
       // Clear old cache
       localStorage.removeItem('campaigns')
+      setIsInitialized(true)
     }
-    return [mockClarityADCampaign]
-  })
+  }, [])
 
-  const [currentCampaign, setCurrentCampaign] = useState<Campaign | null>(null)
-
-  // Persist campaigns to localStorage whenever they change
+  // Persist campaigns to localStorage whenever they change (but not on initial load)
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (isInitialized && typeof window !== 'undefined') {
       localStorage.setItem('campaigns_v2', JSON.stringify(campaigns))
     }
-  }, [campaigns])
+  }, [campaigns, isInitialized])
 
   const getCampaignById = (id: string) => {
     return campaigns.find(c => c.id === id)
