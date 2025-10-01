@@ -41,15 +41,16 @@ export default async function handler(
       return res.status(400).json({ error: 'Missing required fields: patientId and phone are required' });
     }
 
-    // Call Eleven Labs API to initiate the call
+    // Call Eleven Labs API to initiate the call via Twilio
     const elevenLabsPayload = {
       agent_id: elevenLabsAgentId,
-      customer_phone_number: phone,
+      agent_phone_number_id: phoneNumberId,
+      to_number: phone,
     };
 
     console.log('Calling Eleven Labs API with payload:', elevenLabsPayload);
 
-    const elevenLabsResponse = await fetch(`https://api.elevenlabs.io/v1/convai/phone/${phoneNumberId}/call`, {
+    const elevenLabsResponse = await fetch('https://api.elevenlabs.io/v1/convai/twilio/outbound-call', {
       method: 'POST',
       headers: {
         'xi-api-key': elevenLabsApiKey,
@@ -81,9 +82,10 @@ export default async function handler(
     console.log('Eleven Labs call initiated successfully:', callData);
 
     return res.status(200).json({
-      success: true,
-      message: 'Call initiated successfully',
-      callId: callData.conversation_id || callData.id,
+      success: callData.success || true,
+      message: callData.message || 'Call initiated successfully',
+      callId: callData.conversation_id,
+      callSid: callData.callSid,
       data: callData,
     });
 
