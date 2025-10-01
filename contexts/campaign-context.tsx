@@ -29,6 +29,12 @@ export interface CampaignPatient {
   transcript?: string
 }
 
+export interface ScreeningCriteria {
+  inclusionCriteria: Array<{id: number, text: string, field?: string, op?: string, value?: any}>
+  exclusionCriteria: Array<{id: number, text: string, field?: string, op?: string, value?: any}>
+  screeningQuestions: Array<{id: number, question: string}>
+}
+
 export interface Campaign {
   id: string
   studyId: string
@@ -37,6 +43,7 @@ export interface Campaign {
   createdDate: string
   patients: CampaignPatient[]
   transcripts?: CallTranscript[]
+  screeningCriteria?: ScreeningCriteria
   totalPatients: number
   contacted: number
   interested: number

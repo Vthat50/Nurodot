@@ -409,6 +409,14 @@ export default function PatientsPage() {
       name: campaignName,
       createdDate: new Date().toISOString().split('T')[0],
       patients: campaignPatients,
+      screeningCriteria: currentStudy.criteria ? {
+        inclusionCriteria: currentStudy.criteria.inclusion || [],
+        exclusionCriteria: currentStudy.criteria.exclusion || [],
+        screeningQuestions: currentStudy.criteria.questions?.map((q: any, idx: number) => ({
+          id: idx + 1,
+          question: typeof q === 'string' ? q : q.question || q.text || ''
+        })) || []
+      } : undefined,
       totalPatients: campaignPatients.length,
       contacted: 0,
       interested: 0,

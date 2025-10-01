@@ -630,6 +630,84 @@ export default function CampaignDetailPage() {
 
           {/* Calls Tab */}
           <TabsContent value="calls" className="space-y-6 mt-6">
+            {/* Screening Criteria Card */}
+            {campaign.screeningCriteria && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">AI-Extracted Criteria</CardTitle>
+                  <div className="flex gap-2 mt-2">
+                    <Badge variant="outline" className="bg-green-50 text-green-700">
+                      {campaign.screeningCriteria.inclusionCriteria.length} Inclusion
+                    </Badge>
+                    <Badge variant="outline" className="bg-red-50 text-red-700">
+                      {campaign.screeningCriteria.exclusionCriteria.length} Exclusion
+                    </Badge>
+                    <Badge variant="outline" className="bg-purple-50 text-purple-700">
+                      {campaign.screeningCriteria.screeningQuestions.length} Questions
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Inclusion Criteria */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-green-700 mb-3 flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4" />
+                      Inclusion Criteria
+                    </h4>
+                    <div className="space-y-2">
+                      {campaign.screeningCriteria.inclusionCriteria.map((item: any) => (
+                        <div key={item.id} className="border rounded-lg p-3 bg-green-50 border-green-200">
+                          <p className="text-sm text-slate-700">{item.text}</p>
+                          {item.field && (
+                            <div className="mt-2 text-xs text-slate-600 font-mono bg-white p-2 rounded">
+                              Field: {item.field} | Op: {item.op} | {item.value !== undefined ? `Value: ${JSON.stringify(item.value)}` : `Range: ${item.range}`}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Exclusion Criteria */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-red-700 mb-3 flex items-center gap-2">
+                      <XCircle className="h-4 w-4" />
+                      Exclusion Criteria
+                    </h4>
+                    <div className="space-y-2">
+                      {campaign.screeningCriteria.exclusionCriteria.map((item: any) => (
+                        <div key={item.id} className="border rounded-lg p-3 bg-red-50 border-red-200">
+                          <p className="text-sm text-slate-700">{item.text}</p>
+                          {item.field && (
+                            <div className="mt-2 text-xs text-slate-600 font-mono bg-white p-2 rounded">
+                              Field: {item.field} | Op: {item.op} | {item.value !== undefined ? `Value: ${JSON.stringify(item.value)}` : `Range: ${item.range}`}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Screening Questions */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-purple-700 mb-3 flex items-center gap-2">
+                      <MessagesSquare className="h-4 w-4" />
+                      Generated Screening Questions
+                    </h4>
+                    <div className="space-y-2">
+                      {campaign.screeningCriteria.screeningQuestions.map((item: any) => (
+                        <div key={item.id} className="border rounded-lg p-3 bg-purple-50 border-purple-200">
+                          <p className="text-sm text-slate-700">
+                            <span className="font-semibold">Q{item.id}:</span> {item.question}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
