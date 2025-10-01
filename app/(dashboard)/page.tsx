@@ -191,7 +191,7 @@ export default function DashboardPage() {
   studyMetrics.forEach(({ study, pendingReview }) => {
     if (pendingReview > 0) {
       workflowAlerts.push({
-        type: 'critical',
+        type: 'warning',
         message: `${pendingReview} patients pending review in ${study.title}`,
         action: () => {
           setCurrentStudy(study)
@@ -203,7 +203,7 @@ export default function DashboardPage() {
 
   if (patients.filter(p => p.tag === 'Ineligible').length > 20) {
     workflowAlerts.push({
-      type: 'warning',
+      type: 'critical',
       message: 'High exclusion rate detected - review inclusion criteria',
       action: () => router.push('/ingest')
     })
@@ -655,57 +655,6 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      {/* Patient List */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Recent Patient Activity (Quick View)
-          </CardTitle>
-          <div className="flex gap-2 mt-2">
-            <Button size="sm" variant="outline" onClick={() => router.push('/ingest/detail/patients')}>
-              View All Patients
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => router.push('/ingest/detail/patients')}>
-              <Download className="h-3 w-3 mr-1" />
-              Export Data
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {filteredPatients.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No patients match your current filters</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {filteredPatients.slice(0, 5).map((patient) => (
-                <div
-                  key={patient.id}
-                  className="border rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer"
-                  onClick={() => router.push(`/ingest/patients/${patient.id}`)}
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-4">
-                      <div>
-                        <h3 className="font-semibold text-lg">{patient.name}</h3>
-                        <p className="text-sm text-gray-600">
-                          {patient.phone} • {patient.email} • Age {patient.age}
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Badge className={getStatusColor(patient.status)}>{patient.status}</Badge>
-                        <Badge className={`border ${getTagColor(patient.tag)}`}>{patient.tag}</Badge>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   )
 }
