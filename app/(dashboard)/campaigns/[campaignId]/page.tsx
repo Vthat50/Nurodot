@@ -84,6 +84,7 @@ export default function CampaignDetailPage() {
   const [newStatus, setNewStatus] = useState<CampaignPatient['status']>('contacted')
   const [isUpdating, setIsUpdating] = useState(false)
   const [selectedPatientsForCall, setSelectedPatientsForCall] = useState<string[]>([])
+  const [isAgentScriptExpanded, setIsAgentScriptExpanded] = useState(true)
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [selectedCallTranscript, setSelectedCallTranscript] = useState<any | null>(null)
   const [overrideDialogOpen, setOverrideDialogOpen] = useState(false)
@@ -631,184 +632,91 @@ export default function CampaignDetailPage() {
 
           {/* Calls Tab - Configure Campaign */}
           <TabsContent value="calls" className="space-y-6 mt-6">
-            {/* Screening Questions Card */}
+            {/* Agent Script Card - Collapsible */}
             <Card>
-              <CardHeader>
+              <CardHeader className="cursor-pointer" onClick={() => setIsAgentScriptExpanded(!isAgentScriptExpanded)}>
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <MessagesSquare className="h-5 w-5 text-purple-600" />
-                    Screening Questions
+                    Agent Script
+                    <Badge variant="outline" className="ml-2">
+                      {campaign.screeningCriteria?.screeningQuestions.length || 0} questions
+                    </Badge>
                   </div>
-                  <Button variant="outline" onClick={() => {
-                    const newQuestion = prompt('Add new screening question:')
-                    if (newQuestion && campaign.screeningCriteria) {
-                      const newId = Math.max(...campaign.screeningCriteria.screeningQuestions.map(q => q.id), 0) + 1
-                      const updatedCriteria = {
-                        ...campaign.screeningCriteria,
-                        screeningQuestions: [
-                          ...campaign.screeningCriteria.screeningQuestions,
-                          { id: newId, question: newQuestion }
-                        ]
-                      }
-                      updateScreeningCriteria(campaignId, updatedCriteria)
-                    }
-                  }}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Question
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {campaign.screeningCriteria && campaign.screeningCriteria.screeningQuestions.length > 0 ? (
-                  <div className="space-y-3">
-                    {campaign.screeningCriteria.screeningQuestions.map((item: any, index: number) => (
-                      <div key={item.id} className="border rounded-lg p-4 bg-purple-50 border-purple-200">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <p className="text-sm text-slate-700">
-                              <span className="font-semibold text-purple-700">Q{index + 1}:</span> {item.question}
-                            </p>
-                          </div>
-                          <div className="flex gap-2 ml-4">
-                            <Button size="sm" variant="ghost" onClick={() => {
-                              const newQuestion = prompt('Edit question:', item.question)
-                              if (newQuestion !== null && campaign.screeningCriteria) {
-                                const updatedCriteria = {
-                                  ...campaign.screeningCriteria,
-                                  screeningQuestions: campaign.screeningCriteria.screeningQuestions.map(q =>
-                                    q.id === item.id ? { ...q, question: newQuestion } : q
-                                  )
-                                }
-                                updateScreeningCriteria(campaignId, updatedCriteria)
-                              }
-                            }}>
-                              Edit
-                            </Button>
-                            <Button size="sm" variant="ghost" onClick={() => {
-                              if (confirm('Delete this question?') && campaign.screeningCriteria) {
-                                const updatedCriteria = {
-                                  ...campaign.screeningCriteria,
-                                  screeningQuestions: campaign.screeningCriteria.screeningQuestions.filter(q => q.id !== item.id)
-                                }
-                                updateScreeningCriteria(campaignId, updatedCriteria)
-                              }
-                            }}>
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-slate-600">
-                    <MessagesSquare className="h-12 w-12 mx-auto mb-4 text-slate-400" />
-                    <p>No screening questions yet. Click "Add Question" to create one.</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Select Patients for Bulk Call */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Users className="h-5 w-5 text-blue-600" />
-                    Select Patients for Bulk Call
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => {
-                      const validPatients = campaign.patients.filter(p => p.phone && p.phone !== '(555) 123-4567')
-                      setSelectedPatientsForCall(validPatients.map(p => p.id))
-                    }}>
-                      Select All ({campaign.patients.filter(p => p.phone && p.phone !== '(555) 123-4567').length})
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => setSelectedPatientsForCall([])}>
-                      Clear Selection
-                    </Button>
-                    <Button
-                      disabled={selectedPatientsForCall.length === 0}
-                      onClick={() => {
-                        const selectedPatients = campaign.patients.filter(p => selectedPatientsForCall.includes(p.id))
-                        if (confirm(`Send AI calls to ${selectedPatients.length} selected patients?`)) {
-                          Promise.all(selectedPatients.map(patient => handleInitiateAICall(patient)))
-                            .then(() => {
-                              alert(`✅ Initiated ${selectedPatients.length} AI calls successfully`)
-                              setSelectedPatientsForCall([])
-                            })
-                            .catch(err => alert(`❌ Error initiating bulk calls: ${err.message}`))
+                    <Button variant="outline" size="sm" onClick={(e) => {
+                      e.stopPropagation()
+                      const newQuestion = prompt('Add new question:')
+                      if (newQuestion && campaign.screeningCriteria) {
+                        const newId = Math.max(...campaign.screeningCriteria.screeningQuestions.map(q => q.id), 0) + 1
+                        const updatedCriteria = {
+                          ...campaign.screeningCriteria,
+                          screeningQuestions: [
+                            ...campaign.screeningCriteria.screeningQuestions,
+                            { id: newId, question: newQuestion }
+                          ]
                         }
-                      }}
-                    >
-                      <Phone className="h-4 w-4 mr-2" />
-                      Send Bulk Call ({selectedPatientsForCall.length})
+                        updateScreeningCriteria(campaignId, updatedCriteria)
+                      }
+                    }}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Question
                     </Button>
+                    <ChevronDown className={`h-5 w-5 transition-transform ${isAgentScriptExpanded ? 'rotate-180' : ''}`} />
                   </div>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {campaign.patients.map((patient) => {
-                    const isValidPhone = patient.phone && patient.phone !== '(555) 123-4567'
-                    const isSelected = selectedPatientsForCall.includes(patient.id)
-
-                    return (
-                      <div
-                        key={patient.id}
-                        className={`border rounded-lg p-4 transition-all ${
-                          isSelected ? 'bg-blue-50 border-blue-300' : 'bg-slate-50 border-slate-200'
-                        } ${!isValidPhone ? 'opacity-50' : 'cursor-pointer hover:border-blue-200'}`}
-                        onClick={() => {
-                          if (isValidPhone) {
-                            setSelectedPatientsForCall(prev =>
-                              prev.includes(patient.id)
-                                ? prev.filter(id => id !== patient.id)
-                                : [...prev, patient.id]
-                            )
-                          }
-                        }}
-                      >
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            disabled={!isValidPhone}
-                            onChange={(e) => {
-                              e.stopPropagation()
-                              if (isValidPhone) {
-                                setSelectedPatientsForCall(prev =>
-                                  e.target.checked
-                                    ? [...prev, patient.id]
-                                    : prev.filter(id => id !== patient.id)
-                                )
-                              }
-                            }}
-                            className="h-4 w-4 rounded border-slate-300"
-                          />
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <h4 className="font-semibold text-slate-900">{patient.name}</h4>
-                                <p className="text-sm text-slate-600">
-                                  Phone: {patient.phone}
-                                  {!isValidPhone && <span className="text-red-600 ml-2">(Invalid)</span>}
-                                </p>
-                                <p className="text-xs text-slate-500">
-                                  {patient.lastContactDate ? `Last contact: ${patient.lastContactDate}` : 'No calls yet'}
-                                </p>
-                              </div>
-                              <Badge className={statusConfig[patient.status].color}>
-                                {statusConfig[patient.status].label}
-                              </Badge>
+              {isAgentScriptExpanded && (
+                <CardContent>
+                  {campaign.screeningCriteria && campaign.screeningCriteria.screeningQuestions.length > 0 ? (
+                    <div className="space-y-3">
+                      {campaign.screeningCriteria.screeningQuestions.map((item: any, index: number) => (
+                        <div key={item.id} className="border rounded-lg p-4 bg-purple-50 border-purple-200">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <p className="text-sm text-slate-700">
+                                <span className="font-semibold text-purple-700">Q{index + 1}:</span> {item.question}
+                              </p>
+                            </div>
+                            <div className="flex gap-2 ml-4">
+                              <Button size="sm" variant="ghost" onClick={() => {
+                                const newQuestion = prompt('Edit question:', item.question)
+                                if (newQuestion !== null && campaign.screeningCriteria) {
+                                  const updatedCriteria = {
+                                    ...campaign.screeningCriteria,
+                                    screeningQuestions: campaign.screeningCriteria.screeningQuestions.map(q =>
+                                      q.id === item.id ? { ...q, question: newQuestion } : q
+                                    )
+                                  }
+                                  updateScreeningCriteria(campaignId, updatedCriteria)
+                                }
+                              }}>
+                                Edit
+                              </Button>
+                              <Button size="sm" variant="ghost" onClick={() => {
+                                if (confirm('Delete this question?') && campaign.screeningCriteria) {
+                                  const updatedCriteria = {
+                                    ...campaign.screeningCriteria,
+                                    screeningQuestions: campaign.screeningCriteria.screeningQuestions.filter(q => q.id !== item.id)
+                                  }
+                                  updateScreeningCriteria(campaignId, updatedCriteria)
+                                }
+                              }}>
+                                <X className="h-4 w-4" />
+                              </Button>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </CardContent>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-slate-600">
+                      <MessagesSquare className="h-12 w-12 mx-auto mb-4 text-slate-400" />
+                      <p>No questions in agent script yet. Click "Add Question" to create one.</p>
+                    </div>
+                  )}
+                </CardContent>
+              )}
             </Card>
           </TabsContent>
 
