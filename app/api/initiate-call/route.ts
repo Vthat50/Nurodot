@@ -39,16 +39,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get phone number ID from environment
+    const phoneNumberId = process.env.ELEVENLABS_PHONE_NUMBER_ID;
+
+    if (!phoneNumberId) {
+      return NextResponse.json(
+        { error: 'Eleven Labs Phone Number ID not configured' },
+        { status: 500 }
+      );
+    }
+
     // Call Eleven Labs API to initiate the call
-    // Using Eleven Labs Conversational AI API
+    // Using Eleven Labs Conversational AI Phone Call API
     const elevenLabsPayload = {
       agent_id: elevenLabsAgentId,
-      phone_number: phone,
+      customer_phone_number: phone,
     };
 
     console.log('Calling Eleven Labs API with payload:', elevenLabsPayload);
+    console.log('Phone Number ID:', phoneNumberId);
 
-    const elevenLabsResponse = await fetch('https://api.elevenlabs.io/v1/convai/conversation', {
+    const elevenLabsResponse = await fetch(`https://api.elevenlabs.io/v1/convai/phone/${phoneNumberId}/call`, {
       method: 'POST',
       headers: {
         'xi-api-key': elevenLabsApiKey,
