@@ -328,7 +328,7 @@ export default function CampaignDetailPage() {
       console.log('Initiating AI call for patient:', patient);
 
       // Call your backend API to initiate AI call
-      const response = await fetch('/api/initiate-call', {
+      const response = await fetch('/api/call-patient', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
