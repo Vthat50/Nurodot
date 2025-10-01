@@ -42,8 +42,33 @@ interface CampaignContextType {
 
 const CampaignContext = createContext<CampaignContextType | undefined>(undefined)
 
+// Mock campaign for CLARITY-AD with JOHN SMITH
+const mockClarityADCampaign: Campaign = {
+  id: 'CLARITY-AD-SCREENING-001',
+  studyId: 'CLARITY-AD',
+  studyName: 'CLARITY-AD',
+  name: 'CLARITY-AD Screening Campaign',
+  createdDate: '2025-09-20',
+  patients: [
+    {
+      id: 'P001',
+      name: 'JOHN SMITH',
+      age: 67,
+      gender: 'Male',
+      phone: '+12179791384',
+      email: 'john.smith@email.com',
+      status: 'not_contacted',
+    }
+  ],
+  totalPatients: 1,
+  contacted: 0,
+  interested: 0,
+  scheduled: 0,
+  enrolled: 0
+}
+
 export function CampaignProvider({ children }: { children: React.ReactNode }) {
-  const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const [campaigns, setCampaigns] = useState<Campaign[]>([mockClarityADCampaign])
   const [currentCampaign, setCurrentCampaign] = useState<Campaign | null>(null)
 
   const getCampaignById = (id: string) => {
