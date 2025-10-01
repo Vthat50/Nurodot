@@ -62,6 +62,7 @@ interface CampaignContextType {
   addTranscript: (campaignId: string, transcript: CallTranscript) => void
   updateTranscript: (campaignId: string, transcriptId: string, updates: Partial<CallTranscript>) => void
   deleteTranscript: (campaignId: string, transcriptId: string) => void
+  updateScreeningCriteria: (campaignId: string, criteria: ScreeningCriteria) => void
 }
 
 const CampaignContext = createContext<CampaignContextType | undefined>(undefined)
@@ -266,6 +267,19 @@ export function CampaignProvider({ children }: { children: React.ReactNode }) {
     )
   }
 
+  const updateScreeningCriteria = (campaignId: string, criteria: ScreeningCriteria) => {
+    setCampaigns(prevCampaigns =>
+      prevCampaigns.map(campaign =>
+        campaign.id === campaignId
+          ? {
+              ...campaign,
+              screeningCriteria: criteria
+            }
+          : campaign
+      )
+    )
+  }
+
   return (
     <CampaignContext.Provider value={{
       campaigns,
@@ -278,6 +292,7 @@ export function CampaignProvider({ children }: { children: React.ReactNode }) {
       addTranscript,
       updateTranscript,
       deleteTranscript,
+      updateScreeningCriteria,
     }}>
       {children}
     </CampaignContext.Provider>

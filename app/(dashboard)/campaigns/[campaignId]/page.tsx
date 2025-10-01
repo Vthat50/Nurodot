@@ -74,7 +74,7 @@ const statusConfig = {
 export default function CampaignDetailPage() {
   const router = useRouter()
   const params = useParams()
-  const { getCampaignById, updatePatientStatus } = useCampaign()
+  const { getCampaignById, updatePatientStatus, updateScreeningCriteria } = useCampaign()
   const { patients, updatePatient } = usePatients()
   const campaignId = params?.campaignId as string
 
@@ -628,178 +628,99 @@ export default function CampaignDetailPage() {
         </Card>
           </TabsContent>
 
-          {/* Calls Tab */}
+          {/* Calls Tab - Configure Campaign */}
           <TabsContent value="calls" className="space-y-6 mt-6">
-            {/* Screening Criteria Card */}
-            {campaign.screeningCriteria && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">AI-Extracted Criteria</CardTitle>
-                  <div className="flex gap-2 mt-2">
-                    <Badge variant="outline" className="bg-green-50 text-green-700">
-                      {campaign.screeningCriteria.inclusionCriteria.length} Inclusion
-                    </Badge>
-                    <Badge variant="outline" className="bg-red-50 text-red-700">
-                      {campaign.screeningCriteria.exclusionCriteria.length} Exclusion
-                    </Badge>
-                    <Badge variant="outline" className="bg-purple-50 text-purple-700">
-                      {campaign.screeningCriteria.screeningQuestions.length} Questions
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* Inclusion Criteria */}
-                  <div>
-                    <h4 className="text-sm font-semibold text-green-700 mb-3 flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4" />
-                      Inclusion Criteria
-                    </h4>
-                    <div className="space-y-2">
-                      {campaign.screeningCriteria.inclusionCriteria.map((item: any) => (
-                        <div key={item.id} className="border rounded-lg p-3 bg-green-50 border-green-200">
-                          <p className="text-sm text-slate-700">{item.text}</p>
-                          {item.field && (
-                            <div className="mt-2 text-xs text-slate-600 font-mono bg-white p-2 rounded">
-                              Field: {item.field} | Op: {item.op} | {item.value !== undefined ? `Value: ${JSON.stringify(item.value)}` : `Range: ${item.range}`}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Exclusion Criteria */}
-                  <div>
-                    <h4 className="text-sm font-semibold text-red-700 mb-3 flex items-center gap-2">
-                      <XCircle className="h-4 w-4" />
-                      Exclusion Criteria
-                    </h4>
-                    <div className="space-y-2">
-                      {campaign.screeningCriteria.exclusionCriteria.map((item: any) => (
-                        <div key={item.id} className="border rounded-lg p-3 bg-red-50 border-red-200">
-                          <p className="text-sm text-slate-700">{item.text}</p>
-                          {item.field && (
-                            <div className="mt-2 text-xs text-slate-600 font-mono bg-white p-2 rounded">
-                              Field: {item.field} | Op: {item.op} | {item.value !== undefined ? `Value: ${JSON.stringify(item.value)}` : `Range: ${item.range}`}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Screening Questions */}
-                  <div>
-                    <h4 className="text-sm font-semibold text-purple-700 mb-3 flex items-center gap-2">
-                      <MessagesSquare className="h-4 w-4" />
-                      Generated Screening Questions
-                    </h4>
-                    <div className="space-y-2">
-                      {campaign.screeningCriteria.screeningQuestions.map((item: any) => (
-                        <div key={item.id} className="border rounded-lg p-3 bg-purple-50 border-purple-200">
-                          <p className="text-sm text-slate-700">
-                            <span className="font-semibold">Q{item.id}:</span> {item.question}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Bot className="h-5 w-5 text-purple-600" />
-                    Configure Campaign
+                    <MessagesSquare className="h-5 w-5 text-purple-600" />
+                    Screening Questions
                   </div>
-                  <Button onClick={() => {
-                    const allPatients = campaign.patients.filter(p => p.phone && p.phone !== '(555) 123-4567')
-                    if (allPatients.length === 0) {
-                      alert('No patients with valid phone numbers to call')
-                      return
-                    }
-                    Promise.all(allPatients.map(patient => handleInitiateAICall(patient)))
-                      .then(() => alert(`✅ Initiated ${allPatients.length} AI calls successfully`))
-                      .catch(err => alert(`❌ Error initiating bulk calls: ${err.message}`))
-                  }}>
-                    <Phone className="h-4 w-4 mr-2" />
-                    Send Bulk Call
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => {
+                      const newQuestion = prompt('Add new screening question:')
+                      if (newQuestion && campaign.screeningCriteria) {
+                        const newId = Math.max(...campaign.screeningCriteria.screeningQuestions.map(q => q.id), 0) + 1
+                        const updatedCriteria = {
+                          ...campaign.screeningCriteria,
+                          screeningQuestions: [
+                            ...campaign.screeningCriteria.screeningQuestions,
+                            { id: newId, question: newQuestion }
+                          ]
+                        }
+                        updateScreeningCriteria(campaignId, updatedCriteria)
+                      }
+                    }}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Question
+                    </Button>
+                    <Button onClick={() => {
+                      const allPatients = campaign.patients.filter(p => p.phone && p.phone !== '(555) 123-4567')
+                      if (allPatients.length === 0) {
+                        alert('No patients with valid phone numbers to call')
+                        return
+                      }
+                      if (confirm(`Send AI calls to ${allPatients.length} patients?`)) {
+                        Promise.all(allPatients.map(patient => handleInitiateAICall(patient)))
+                          .then(() => alert(`✅ Initiated ${allPatients.length} AI calls successfully`))
+                          .catch(err => alert(`❌ Error initiating bulk calls: ${err.message}`))
+                      }
+                    }}>
+                      <Phone className="h-4 w-4 mr-2" />
+                      Send Bulk Call
+                    </Button>
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {campaign.patients.map((patient) => (
-                    <div key={patient.id} className="border rounded-lg p-4 bg-slate-50">
-                      <div className="flex items-center justify-between mb-3">
-                        <div>
-                          <h4 className="font-semibold text-slate-900">{patient.name}</h4>
-                          <p className="text-sm text-slate-600">Phone: {patient.phone}</p>
-                          <p className="text-sm text-slate-600">
-                            {patient.lastContactDate ? `Last contact: ${patient.lastContactDate}` : 'No calls yet'}
-                          </p>
-                        </div>
-                        <Badge className={statusConfig[patient.status].color}>
-                          {statusConfig[patient.status].label}
-                        </Badge>
-                      </div>
-                      {patient.transcript && (
-                        <div className="p-3 bg-white rounded border border-slate-200 mb-3">
-                          <div className="flex items-center justify-between mb-2">
-                            <p className="text-xs font-semibold text-slate-700">Screening Transcript:</p>
-                            <div className="flex gap-2">
-                              <Button size="sm" variant="ghost" onClick={() => {
-                                const newTranscript = prompt('Edit transcript:', patient.transcript)
-                                if (newTranscript !== null) {
-                                  updatePatientStatus(campaignId, patient.id, patient.status, newTranscript)
-                                }
-                              }}>
-                                Edit
-                              </Button>
-                              <Button size="sm" variant="ghost" onClick={() => {
-                                if (confirm('Delete this transcript?')) {
-                                  updatePatientStatus(campaignId, patient.id, patient.status, '')
-                                }
-                              }}>
-                                Delete
-                              </Button>
-                            </div>
+                {campaign.screeningCriteria && campaign.screeningCriteria.screeningQuestions.length > 0 ? (
+                  <div className="space-y-3">
+                    {campaign.screeningCriteria.screeningQuestions.map((item: any, index: number) => (
+                      <div key={item.id} className="border rounded-lg p-4 bg-purple-50 border-purple-200">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <p className="text-sm text-slate-700">
+                              <span className="font-semibold text-purple-700">Q{index + 1}:</span> {item.question}
+                            </p>
                           </div>
-                          <p className="text-sm text-slate-700 whitespace-pre-wrap">{patient.transcript}</p>
+                          <div className="flex gap-2 ml-4">
+                            <Button size="sm" variant="ghost" onClick={() => {
+                              const newQuestion = prompt('Edit question:', item.question)
+                              if (newQuestion !== null && campaign.screeningCriteria) {
+                                const updatedCriteria = {
+                                  ...campaign.screeningCriteria,
+                                  screeningQuestions: campaign.screeningCriteria.screeningQuestions.map(q =>
+                                    q.id === item.id ? { ...q, question: newQuestion } : q
+                                  )
+                                }
+                                updateScreeningCriteria(campaignId, updatedCriteria)
+                              }
+                            }}>
+                              Edit
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => {
+                              if (confirm('Delete this question?') && campaign.screeningCriteria) {
+                                const updatedCriteria = {
+                                  ...campaign.screeningCriteria,
+                                  screeningQuestions: campaign.screeningCriteria.screeningQuestions.filter(q => q.id !== item.id)
+                                }
+                                updateScreeningCriteria(campaignId, updatedCriteria)
+                              }
+                            }}>
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
-                      )}
-                      {patient.notes && (
-                        <div className="p-3 bg-white rounded border border-slate-200 mb-3">
-                          <p className="text-xs font-semibold text-slate-700 mb-2">AI Call Summary:</p>
-                          <p className="text-sm text-slate-700">{patient.notes}</p>
-                        </div>
-                      )}
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => handleInitiateAICall(patient)}>
-                          <Bot className="h-3 w-3 mr-1" />
-                          AI Call
-                        </Button>
-                        {!patient.transcript && (
-                          <Button size="sm" variant="outline" onClick={() => {
-                            const newTranscript = prompt('Add screening transcript for ' + patient.name + ':')
-                            if (newTranscript) {
-                              updatePatientStatus(campaignId, patient.id, patient.status, newTranscript)
-                            }
-                          }}>
-                            <Plus className="h-3 w-3 mr-1" />
-                            Add Transcript
-                          </Button>
-                        )}
-                        <Button size="sm" variant="outline" onClick={() => router.push(`/ingest/patients/${patient.id}`)}>
-                          View Full Profile
-                        </Button>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-slate-600">
+                    <MessagesSquare className="h-12 w-12 mx-auto mb-4 text-slate-400" />
+                    <p>No screening questions yet. Click "Add Question" to create one.</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
