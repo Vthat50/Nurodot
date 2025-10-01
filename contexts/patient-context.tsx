@@ -694,8 +694,25 @@ const mockGraduateIPatients: Patient[] = [
   },
 ]
 
+// Additional ineligible patients for testing alerts
+const mockIneligiblePatients: Patient[] = Array.from({ length: 21 }, (_, i) => ({
+  id: `INELIG-${String(i + 1).padStart(3, '0')}`,
+  name: `Patient ${i + 1}`,
+  age: 45 + (i % 30),
+  gender: i % 2 === 0 ? 'Male' : 'Female',
+  phone: `(555) ${String(Math.floor(Math.random() * 900) + 100)}-${String(Math.floor(Math.random() * 9000) + 1000)}`,
+  email: `patient${i + 1}@email.com`,
+  conditions: ['Various conditions'],
+  medications: ['Various medications'],
+  source: 'EHR' as const,
+  studyId: 'CLARITY-AD',
+  tag: 'Ineligible' as const,
+  status: 'Failed Screening' as const,
+  legacyStatus: 'not_qualified' as const,
+}))
+
 export function PatientProvider({ children }: { children: React.ReactNode }) {
-  const [patients, setPatients] = useState<Patient[]>([...mockClarityADPatients, ...mockGraduateIPatients])
+  const [patients, setPatients] = useState<Patient[]>([...mockClarityADPatients, ...mockGraduateIPatients, ...mockIneligiblePatients])
 
   const addPatients = (newPatients: Patient[]) => {
     setPatients(prev => [...prev, ...newPatients])
