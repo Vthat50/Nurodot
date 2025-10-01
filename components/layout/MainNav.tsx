@@ -190,7 +190,7 @@ export function MainNav() {
                       <div className="flex items-center justify-between">
                         <span className="text-sm">{item.name}</span>
                         {item.badge !== undefined && item.badge > 0 && (
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge variant="secondary" className="text-xs" suppressHydrationWarning>
                             {item.badge}
                           </Badge>
                         )}

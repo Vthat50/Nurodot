@@ -2,6 +2,18 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
 
+export interface CallTranscript {
+  id: string
+  patientId: string
+  patientName: string
+  callDate: string
+  callTime: string
+  duration: string
+  transcript: string
+  summary?: string
+  outcome?: 'interested' | 'not_interested' | 'needs_followup' | 'scheduled'
+}
+
 export interface CampaignPatient {
   id: string
   name: string
@@ -14,6 +26,13 @@ export interface CampaignPatient {
   lastContactMethod?: 'phone' | 'email' | 'ai_call' | 'portal'
   notes?: string
   scheduledDate?: string
+  transcript?: string
+}
+
+export interface ScreeningCriteria {
+  inclusionCriteria: Array<{id: number, text: string, field?: string, op?: string, value?: any}>
+  exclusionCriteria: Array<{id: number, text: string, field?: string, op?: string, value?: any}>
+  screeningQuestions: Array<{id: number, question: string}>
 }
 
 export interface Campaign {
@@ -23,6 +42,8 @@ export interface Campaign {
   name: string
   createdDate: string
   patients: CampaignPatient[]
+  transcripts?: CallTranscript[]
+  screeningCriteria?: ScreeningCriteria
   totalPatients: number
   contacted: number
   interested: number
@@ -38,6 +59,10 @@ interface CampaignContextType {
   createCampaign: (campaign: Campaign) => void
   addPatientToCampaign: (campaignId: string, patient: CampaignPatient) => void
   updatePatientStatus: (campaignId: string, patientId: string, status: CampaignPatient['status'], notes?: string) => void
+  addTranscript: (campaignId: string, transcript: CallTranscript) => void
+  updateTranscript: (campaignId: string, transcriptId: string, updates: Partial<CallTranscript>) => void
+  deleteTranscript: (campaignId: string, transcriptId: string) => void
+  updateScreeningCriteria: (campaignId: string, criteria: ScreeningCriteria) => void
 }
 
 const CampaignContext = createContext<CampaignContextType | undefined>(undefined)
@@ -60,6 +85,7 @@ const mockClarityADCampaign: Campaign = {
       status: 'not_contacted',
     }
   ],
+  transcripts: [],
   totalPatients: 1,
   contacted: 0,
   interested: 0,
@@ -68,28 +94,34 @@ const mockClarityADCampaign: Campaign = {
 }
 
 export function CampaignProvider({ children }: { children: React.ReactNode }) {
-  // Initialize campaigns from localStorage or use mock data
-  // Changed key to 'campaigns_v2' to force reload with correct phone number
-  const [campaigns, setCampaigns] = useState<Campaign[]>(() => {
+  // Initialize campaigns with mock data to avoid hydration mismatch
+  const [campaigns, setCampaigns] = useState<Campaign[]>([mockClarityADCampaign])
+  const [currentCampaign, setCurrentCampaign] = useState<Campaign | null>(null)
+  const [isInitialized, setIsInitialized] = useState(false)
+
+  // Load from localStorage after mount to avoid hydration mismatch
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('campaigns_v2')
       if (stored) {
-        return JSON.parse(stored)
+        try {
+          setCampaigns(JSON.parse(stored))
+        } catch (e) {
+          console.error('Failed to parse campaigns from localStorage:', e)
+        }
       }
       // Clear old cache
       localStorage.removeItem('campaigns')
+      setIsInitialized(true)
     }
-    return [mockClarityADCampaign]
-  })
+  }, [])
 
-  const [currentCampaign, setCurrentCampaign] = useState<Campaign | null>(null)
-
-  // Persist campaigns to localStorage whenever they change
+  // Persist campaigns to localStorage whenever they change (but not on initial load)
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (isInitialized && typeof window !== 'undefined') {
       localStorage.setItem('campaigns_v2', JSON.stringify(campaigns))
     }
-  }, [campaigns])
+  }, [campaigns, isInitialized])
 
   const getCampaignById = (id: string) => {
     return campaigns.find(c => c.id === id)
@@ -200,6 +232,60 @@ export function CampaignProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const addTranscript = (campaignId: string, transcript: CallTranscript) => {
+    setCampaigns(prevCampaigns =>
+      prevCampaigns.map(campaign =>
+        campaign.id === campaignId
+          ? {
+              ...campaign,
+              transcripts: [...(campaign.transcripts || []), transcript]
+            }
+          : campaign
+      )
+    )
+  }
+
+  const updateTranscript = (campaignId: string, transcriptId: string, updates: Partial<CallTranscript>) => {
+    setCampaigns(prevCampaigns =>
+      prevCampaigns.map(campaign =>
+        campaign.id === campaignId
+          ? {
+              ...campaign,
+              transcripts: (campaign.transcripts || []).map(t =>
+                t.id === transcriptId ? { ...t, ...updates } : t
+              )
+            }
+          : campaign
+      )
+    )
+  }
+
+  const deleteTranscript = (campaignId: string, transcriptId: string) => {
+    setCampaigns(prevCampaigns =>
+      prevCampaigns.map(campaign =>
+        campaign.id === campaignId
+          ? {
+              ...campaign,
+              transcripts: (campaign.transcripts || []).filter(t => t.id !== transcriptId)
+            }
+          : campaign
+      )
+    )
+  }
+
+  const updateScreeningCriteria = (campaignId: string, criteria: ScreeningCriteria) => {
+    setCampaigns(prevCampaigns =>
+      prevCampaigns.map(campaign =>
+        campaign.id === campaignId
+          ? {
+              ...campaign,
+              screeningCriteria: criteria
+            }
+          : campaign
+      )
+    )
+  }
+
   return (
     <CampaignContext.Provider value={{
       campaigns,
@@ -209,6 +295,10 @@ export function CampaignProvider({ children }: { children: React.ReactNode }) {
       createCampaign,
       addPatientToCampaign,
       updatePatientStatus,
+      addTranscript,
+      updateTranscript,
+      deleteTranscript,
+      updateScreeningCriteria,
     }}>
       {children}
     </CampaignContext.Provider>

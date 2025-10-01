@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useParams } from "next/navigation"
+import dynamic from 'next/dynamic'
 import { useCampaign, type CampaignPatient, type Campaign } from "@/contexts/campaign-context"
 import { usePatients } from "@/contexts/patient-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -53,13 +54,16 @@ import {
   X,
   Settings,
   Smartphone,
-  RefreshCw
+  RefreshCw,
+  ChevronDown,
+  ChevronRight
 } from "lucide-react"
 import { format, addDays, setHours, setMinutes, isSameDay, isAfter, isBefore } from "date-fns"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AICallIntegration } from "@/components/ai-call-calendar-integration"
+import { AICallScheduler } from "@/components/ai-call-scheduler"
 
 const statusConfig = {
   not_contacted: { label: 'Not Contacted', color: 'bg-slate-100 text-slate-700', icon: Clock },
@@ -74,7 +78,7 @@ const statusConfig = {
 export default function CampaignDetailPage() {
   const router = useRouter()
   const params = useParams()
-  const { getCampaignById, updatePatientStatus } = useCampaign()
+  const { getCampaignById, updatePatientStatus, updateScreeningCriteria } = useCampaign()
   const { patients, updatePatient } = usePatients()
   const campaignId = params?.campaignId as string
 
@@ -83,13 +87,23 @@ export default function CampaignDetailPage() {
   const [contactNotes, setContactNotes] = useState("")
   const [newStatus, setNewStatus] = useState<CampaignPatient['status']>('contacted')
   const [isUpdating, setIsUpdating] = useState(false)
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+  const [selectedPatientsForCall, setSelectedPatientsForCall] = useState<string[]>([])
+  const [isAgentScriptExpanded, setIsAgentScriptExpanded] = useState(false)
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [isMounted, setIsMounted] = useState(false)
   const [selectedCallTranscript, setSelectedCallTranscript] = useState<any | null>(null)
   const [overrideDialogOpen, setOverrideDialogOpen] = useState(false)
   const [overrideTag, setOverrideTag] = useState<string>("")
   const [overrideStatus, setOverrideStatus] = useState<string>("")
   const [overrideReason, setOverrideReason] = useState("")
   const [showAICallIntegration, setShowAICallIntegration] = useState(false)
+  const [showBulkCallDialog, setShowBulkCallDialog] = useState(false)
+  const [bulkCallDetails, setBulkCallDetails] = useState({
+    date: '',
+    time: '09:00'
+  })
+  const [isBulkCallMode, setIsBulkCallMode] = useState(false)
+  const [selectedPatientIds, setSelectedPatientIds] = useState<string[]>([])
 
   // Calendar-specific state
   interface TimeSlot {
@@ -119,7 +133,7 @@ export default function CampaignDetailPage() {
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null)
   const [loading, setLoading] = useState(false)
   const [selectedPatientForBooking, setSelectedPatientForBooking] = useState<string | null>(null)
-  const [lastSyncTime, setLastSyncTime] = useState<Date>(new Date())
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null)
   const [aiBookingsCount, setAiBookingsCount] = useState(0)
 
   const [settings, setSettings] = useState<CalendarSettings>({
@@ -132,12 +146,21 @@ export default function CampaignDetailPage() {
   })
 
   const [newSlot, setNewSlot] = useState({
-    date: new Date(),
+    date: null as any,
     startTime: "09:00",
     endTime: "09:30",
     recurring: false,
     recurringDays: 0
   })
+
+  // Initialize dates and mounted state on client side only
+  useEffect(() => {
+    setIsMounted(true)
+    const now = new Date()
+    setSelectedDate(now)
+    setLastSyncTime(now)
+    setNewSlot(prev => ({ ...prev, date: now }))
+  }, [])
 
   // Load campaign by ID on mount
   useEffect(() => {
@@ -283,12 +306,12 @@ export default function CampaignDetailPage() {
     preferredTimes: ["morning", "afternoon"]
   })) || []
 
-  // Load slots when date changes
-  useEffect(() => {
-    if (timeSlots.length === 0 && campaign) {
-      generateMockSlots()
-    }
-  }, [selectedDate, campaign])
+  // Remove auto-loading of slots - they should start empty
+  // useEffect(() => {
+  //   if (timeSlots.length === 0 && campaign) {
+  //     generateMockSlots()
+  //   }
+  // }, [selectedDate, campaign])
 
   if (!campaign) {
     return (
@@ -396,8 +419,20 @@ export default function CampaignDetailPage() {
     }, 500)
   }
 
+  // Prevent hydration mismatch by not rendering until mounted
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-slate-600">Loading campaign...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50" suppressHydrationWarning>
       {/* Header */}
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-6 py-4">
@@ -412,8 +447,8 @@ export default function CampaignDetailPage() {
                 Back to Campaigns
               </Button>
               <div>
-                <h1 className="text-2xl font-bold text-slate-900">{campaign.name}</h1>
-                <p className="text-sm text-slate-600">{campaign.studyName}</p>
+                <h1 className="text-2xl font-bold text-slate-900">Configure Campaign</h1>
+                <p className="text-sm text-slate-600">{campaign.name} • {campaign.studyName}</p>
               </div>
             </div>
           </div>
@@ -423,9 +458,8 @@ export default function CampaignDetailPage() {
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8 space-y-6">
         <Tabs defaultValue="patients" className="w-full">
-          <TabsList className="grid w-full md:w-[600px] grid-cols-4">
+          <TabsList className="grid w-full md:w-[450px] grid-cols-3">
             <TabsTrigger value="patients">Patients</TabsTrigger>
-            <TabsTrigger value="calls">Calls</TabsTrigger>
             <TabsTrigger value="calendar">Calendar</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
@@ -468,10 +502,52 @@ export default function CampaignDetailPage() {
         {/* Patient List */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Campaign Patients
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Campaign Patients
+              </CardTitle>
+              {!isBulkCallMode ? (
+                <Button
+                  onClick={() => {
+                    setIsBulkCallMode(true)
+                    setSelectedPatientIds([])
+                  }}
+                >
+                  <PhoneCall className="h-4 w-4 mr-2" />
+                  Bulk Call
+                </Button>
+              ) : (
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsBulkCallMode(false)
+                      setSelectedPatientIds([])
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      if (selectedPatientIds.length === 0) {
+                        alert('Please select at least one patient')
+                        return
+                      }
+                      setBulkCallDetails({
+                        date: format(new Date(), 'yyyy-MM-dd'),
+                        time: '09:00'
+                      })
+                      setShowBulkCallDialog(true)
+                    }}
+                    disabled={selectedPatientIds.length === 0}
+                  >
+                    <PhoneCall className="h-4 w-4 mr-2" />
+                    Schedule Calls ({selectedPatientIds.length})
+                  </Button>
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -480,17 +556,41 @@ export default function CampaignDetailPage() {
                 return (
                   <div
                     key={patient.id}
-                    className="border rounded-lg p-4 bg-slate-50 hover:bg-slate-100 transition-colors"
+                    className={`border rounded-lg p-4 transition-colors ${
+                      isBulkCallMode
+                        ? selectedPatientIds.includes(patient.id)
+                          ? 'bg-blue-50 border-blue-300 hover:bg-blue-100'
+                          : 'bg-slate-50 hover:bg-slate-100 cursor-pointer'
+                        : 'bg-slate-50 hover:bg-slate-100'
+                    }`}
+                    onClick={() => {
+                      if (isBulkCallMode) {
+                        if (selectedPatientIds.includes(patient.id)) {
+                          setSelectedPatientIds(selectedPatientIds.filter(id => id !== patient.id))
+                        } else {
+                          setSelectedPatientIds([...selectedPatientIds, patient.id])
+                        }
+                      }
+                    }}
                   >
                     <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-semibold text-slate-900">{patient.name}</h4>
-                          <Badge className={statusConfig[patient.status].color}>
-                            <StatusIcon className="h-3 w-3 mr-1" />
-                            {statusConfig[patient.status].label}
-                          </Badge>
-                        </div>
+                      <div className="flex items-center gap-3 flex-1">
+                        {isBulkCallMode && (
+                          <input
+                            type="checkbox"
+                            checked={selectedPatientIds.includes(patient.id)}
+                            onChange={() => {}}
+                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                        )}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-semibold text-slate-900">{patient.name}</h4>
+                            <Badge className={statusConfig[patient.status].color}>
+                              <StatusIcon className="h-3 w-3 mr-1" />
+                              {statusConfig[patient.status].label}
+                            </Badge>
+                          </div>
                         <p className="text-sm text-slate-600">
                           {patient.age} years old • {patient.gender}
                         </p>
@@ -517,25 +617,28 @@ export default function CampaignDetailPage() {
                             </p>
                           </div>
                         )}
+                        </div>
                       </div>
                     </div>
 
-                    <div className="flex gap-2">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setSelectedPatient(patient)
-                              setContactNotes(patient.notes || "")
-                              setNewStatus(patient.status)
-                            }}
-                          >
-                            <MessagesSquare className="h-3 w-3 mr-1" />
-                            Update Status
-                          </Button>
-                        </DialogTrigger>
+                    {!isBulkCallMode && (
+                      <div className="flex gap-2">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setSelectedPatient(patient)
+                                setContactNotes(patient.notes || "")
+                                setNewStatus(patient.status)
+                              }}
+                            >
+                              <MessagesSquare className="h-3 w-3 mr-1" />
+                              Update Status
+                            </Button>
+                          </DialogTrigger>
                         <DialogContent>
                           <DialogHeader>
                             <DialogTitle>Update Patient Status</DialogTitle>
@@ -584,94 +687,49 @@ export default function CampaignDetailPage() {
                         </DialogContent>
                       </Dialog>
 
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleInitiateAICall(patient)}
-                      >
-                        <Bot className="h-3 w-3 mr-1" />
-                        AI Call
-                      </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleInitiateAICall(patient)
+                          }}
+                        >
+                          <Phone className="h-3 w-3 mr-1" />
+                          Call Patient
+                        </Button>
 
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleInitiateAICall(patient)}
-                      >
-                        <Phone className="h-3 w-3 mr-1" />
-                        Call Patient
-                      </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            window.location.href = `mailto:${patient.email}`
+                          }}
+                        >
+                          <Mail className="h-3 w-3 mr-1" />
+                          Email
+                        </Button>
 
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => window.location.href = `mailto:${patient.email}`}
-                      >
-                        <Mail className="h-3 w-3 mr-1" />
-                        Email
-                      </Button>
-
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => router.push(`/ingest/patients/${patient.id}`)}
-                      >
-                        <User className="h-3 w-3 mr-1" />
-                        Profile
-                      </Button>
-                    </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            router.push(`/ingest/patients/${patient.id}`)
+                          }}
+                        >
+                          <User className="h-3 w-3 mr-1" />
+                          Profile
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )
               })}
             </div>
           </CardContent>
         </Card>
-          </TabsContent>
-
-          {/* Calls Tab */}
-          <TabsContent value="calls" className="space-y-6 mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bot className="h-5 w-5 text-purple-600" />
-                  AI Call Transcripts & Analysis
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {campaign.patients.filter(p => p.status !== 'not_contacted').map((patient) => (
-                    <div key={patient.id} className="border rounded-lg p-4 bg-slate-50">
-                      <div className="flex items-center justify-between mb-3">
-                        <div>
-                          <h4 className="font-semibold text-slate-900">{patient.name}</h4>
-                          <p className="text-sm text-slate-600">
-                            {patient.lastContactDate ? `Last contact: ${patient.lastContactDate}` : 'No calls yet'}
-                          </p>
-                        </div>
-                        <Badge className={statusConfig[patient.status].color}>
-                          {statusConfig[patient.status].label}
-                        </Badge>
-                      </div>
-                      {patient.lastContactMethod === 'AI Call' && patient.notes && (
-                        <div className="p-3 bg-white rounded border border-slate-200 mb-3">
-                          <p className="text-xs font-semibold text-slate-700 mb-2">AI Call Summary:</p>
-                          <p className="text-sm text-slate-700">{patient.notes}</p>
-                        </div>
-                      )}
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => handleInitiateAICall(patient)}>
-                          <Bot className="h-3 w-3 mr-1" />
-                          Initiate AI Call
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => router.push(`/ingest/patients/${patient.id}`)}>
-                          View Full Profile
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
           </TabsContent>
 
           {/* Calendar Tab */}
@@ -808,37 +866,43 @@ export default function CampaignDetailPage() {
                   </div>
 
                   <div className="mt-4 space-y-2">
-                    <Button
-                      className="w-full"
-                      onClick={() => setShowAddSlotDialog(true)}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Time Slot
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={generateBulkSlots}
-                    >
-                      <Calendar className="h-4 w-4 mr-2" />
-                      Generate Bulk Slots
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => setShowAICallIntegration(true)}
-                    >
-                      <Brain className="h-4 w-4 mr-2" />
-                      AI Auto-Schedule
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => setShowSettingsDialog(true)}
-                    >
-                      <Settings className="h-4 w-4 mr-2" />
-                      Settings
-                    </Button>
+                    {timeSlots.length === 0 ? (
+                      <>
+                        <Button
+                          className="w-full"
+                          onClick={generateBulkSlots}
+                        >
+                          <Calendar className="h-4 w-4 mr-2" />
+                          Generate Bulk Slots
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => setShowAddSlotDialog(true)}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Single Slot
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button
+                          className="w-full"
+                          onClick={() => setShowAddSlotDialog(true)}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Time Slot
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={generateBulkSlots}
+                        >
+                          <Calendar className="h-4 w-4 mr-2" />
+                          Generate Bulk Slots
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -860,16 +924,40 @@ export default function CampaignDetailPage() {
                     <div className="text-center py-8 text-muted-foreground">
                       Loading slots...
                     </div>
+                  ) : timeSlots.length === 0 ? (
+                    <div className="text-center py-16">
+                      <Calendar className="h-16 w-16 mx-auto text-slate-300 mb-6" />
+                      <h3 className="text-lg font-semibold text-slate-900 mb-2">No Time Slots Created</h3>
+                      <p className="text-slate-600 mb-6 max-w-md mx-auto">
+                        Get started by generating bulk time slots for the next 30 days or add individual slots manually.
+                      </p>
+                      <div className="flex gap-3 justify-center">
+                        <Button
+                          size="lg"
+                          onClick={generateBulkSlots}
+                        >
+                          <Calendar className="h-4 w-4 mr-2" />
+                          Generate Bulk Slots
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="lg"
+                          onClick={() => setShowAddSlotDialog(true)}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Single Slot
+                        </Button>
+                      </div>
+                    </div>
                   ) : filteredSlots.length === 0 ? (
                     <div className="text-center py-8">
                       <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                      <p className="text-muted-foreground">No time slots for this date</p>
+                      <p className="text-muted-foreground mb-4">No time slots for this date</p>
                       <Button
-                        className="mt-4"
                         onClick={() => setShowAddSlotDialog(true)}
                       >
                         <Plus className="h-4 w-4 mr-2" />
-                        Add First Slot
+                        Add Slot for This Date
                       </Button>
                     </div>
                   ) : (
@@ -1740,6 +1828,81 @@ export default function CampaignDetailPage() {
           setShowAICallIntegration(false)
         }}
       />
+
+      {/* Simple Bulk Call Dialog */}
+      <Dialog open={showBulkCallDialog} onOpenChange={setShowBulkCallDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Schedule Bulk AI Calls</DialogTitle>
+            <DialogDescription>
+              Set the date and time to start calling all patients in this campaign
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>Date</Label>
+              <Input
+                type="date"
+                value={bulkCallDetails.date}
+                onChange={(e) => setBulkCallDetails({ ...bulkCallDetails, date: e.target.value })}
+                min={format(new Date(), 'yyyy-MM-dd')}
+              />
+            </div>
+
+            <div>
+              <Label>Time</Label>
+              <Input
+                type="time"
+                value={bulkCallDetails.time}
+                onChange={(e) => setBulkCallDetails({ ...bulkCallDetails, time: e.target.value })}
+              />
+            </div>
+
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-900 mb-3">
+                <strong>{selectedPatientIds.length} patient{selectedPatientIds.length !== 1 ? 's' : ''}</strong> will be called starting at{' '}
+                {bulkCallDetails.date && bulkCallDetails.time ? (
+                  <>
+                    <strong>{format(new Date(bulkCallDetails.date), 'MMM d, yyyy')}</strong> at{' '}
+                    <strong>{bulkCallDetails.time}</strong>
+                  </>
+                ) : (
+                  <strong>the selected date and time</strong>
+                )}
+              </p>
+              <div className="text-xs text-blue-700 space-y-1">
+                {campaign.patients
+                  .filter(p => selectedPatientIds.includes(p.id))
+                  .map(p => (
+                    <div key={p.id}>• {p.name}</div>
+                  ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setShowBulkCallDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                console.log('Bulk call scheduled:', bulkCallDetails, selectedPatientIds.length)
+                // Here you would typically make an API call to schedule the calls
+                const selectedPatients = campaign.patients.filter(p => selectedPatientIds.includes(p.id))
+                alert(`Scheduled ${selectedPatientIds.length} calls for ${bulkCallDetails.date} at ${bulkCallDetails.time}\n\nPatients:\n${selectedPatients.map(p => p.name).join('\n')}`)
+                setShowBulkCallDialog(false)
+                setIsBulkCallMode(false)
+                setSelectedPatientIds([])
+              }}
+              disabled={!bulkCallDetails.date || !bulkCallDetails.time}
+            >
+              <PhoneCall className="h-4 w-4 mr-2" />
+              Schedule {selectedPatientIds.length} Call{selectedPatientIds.length !== 1 ? 's' : ''}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

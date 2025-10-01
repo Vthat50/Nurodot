@@ -396,7 +396,7 @@ export default function PatientsPage() {
         name: result.patient.name,
         age: result.patient.age,
         gender: result.patient.gender,
-        phone: '(555) 123-4567', // Mock data
+        phone: result.patient.id === 'P001' ? '+12179791384' : '(555) 123-4567', // Use real number for John Smith
         email: result.patient.name.toLowerCase().replace(' ', '.') + '@email.com',
         status: 'not_contacted' as const
       }
@@ -409,6 +409,14 @@ export default function PatientsPage() {
       name: campaignName,
       createdDate: new Date().toISOString().split('T')[0],
       patients: campaignPatients,
+      screeningCriteria: currentStudy.criteria ? {
+        inclusionCriteria: currentStudy.criteria.inclusion || [],
+        exclusionCriteria: currentStudy.criteria.exclusion || [],
+        screeningQuestions: currentStudy.criteria.questions?.map((q: any, idx: number) => ({
+          id: idx + 1,
+          question: typeof q === 'string' ? q : q.question || q.text || ''
+        })) || []
+      } : undefined,
       totalPatients: campaignPatients.length,
       contacted: 0,
       interested: 0,
