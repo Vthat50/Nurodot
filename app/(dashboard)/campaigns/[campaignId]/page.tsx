@@ -85,7 +85,7 @@ export default function CampaignDetailPage() {
   const [isUpdating, setIsUpdating] = useState(false)
   const [selectedPatientsForCall, setSelectedPatientsForCall] = useState<string[]>([])
   const [isAgentScriptExpanded, setIsAgentScriptExpanded] = useState(true)
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [selectedCallTranscript, setSelectedCallTranscript] = useState<any | null>(null)
   const [overrideDialogOpen, setOverrideDialogOpen] = useState(false)
   const [overrideTag, setOverrideTag] = useState<string>("")
@@ -134,12 +134,23 @@ export default function CampaignDetailPage() {
   })
 
   const [newSlot, setNewSlot] = useState({
-    date: new Date(),
+    date: null as any,
     startTime: "09:00",
     endTime: "09:30",
     recurring: false,
     recurringDays: 0
   })
+
+  // Initialize dates on client side only
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const now = new Date()
+      setSelectedDate(now)
+      setLastSyncTime(now)
+      setSchedulingSettings(prev => ({ ...prev, date: now }))
+      setNewSlot(prev => ({ ...prev, date: now }))
+    }
+  }, [])
 
   // Load campaign by ID on mount
   useEffect(() => {
