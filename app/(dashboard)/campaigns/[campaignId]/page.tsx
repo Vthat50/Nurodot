@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useParams } from "next/navigation"
+import dynamic from 'next/dynamic'
 import { useCampaign, type CampaignPatient, type Campaign } from "@/contexts/campaign-context"
 import { usePatients } from "@/contexts/patient-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -122,7 +123,7 @@ export default function CampaignDetailPage() {
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null)
   const [loading, setLoading] = useState(false)
   const [selectedPatientForBooking, setSelectedPatientForBooking] = useState<string | null>(null)
-  const [lastSyncTime, setLastSyncTime] = useState<Date>(new Date())
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null)
   const [aiBookingsCount, setAiBookingsCount] = useState(0)
 
   const [settings, setSettings] = useState<CalendarSettings>({
@@ -422,7 +423,7 @@ export default function CampaignDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50" suppressHydrationWarning>
       {/* Header */}
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-6 py-4">
