@@ -5,12 +5,28 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { patientId, phone, campaignId, studyId } = body;
 
+    console.log('Initiating call request:', { patientId, phone, campaignId, studyId });
+
     // Get Eleven Labs API key from environment
     const elevenLabsApiKey = process.env.ELEVENLABS_API_KEY;
+    const elevenLabsAgentId = process.env.ELEVENLABS_AGENT_ID;
+
+    console.log('Environment check:', {
+      hasApiKey: !!elevenLabsApiKey,
+      hasAgentId: !!elevenLabsAgentId,
+      apiKeyPrefix: elevenLabsApiKey?.substring(0, 10)
+    });
 
     if (!elevenLabsApiKey) {
       return NextResponse.json(
         { error: 'Eleven Labs API key not configured' },
+        { status: 500 }
+      );
+    }
+
+    if (!elevenLabsAgentId) {
+      return NextResponse.json(
+        { error: 'Eleven Labs Agent ID not configured' },
         { status: 500 }
       );
     }
@@ -25,42 +41,47 @@ export async function POST(request: NextRequest) {
 
     // Call Eleven Labs API to initiate the call
     // Using Eleven Labs Conversational AI API
+    const elevenLabsPayload = {
+      agent_id: elevenLabsAgentId,
+      phone_number: phone,
+    };
+
+    console.log('Calling Eleven Labs API with payload:', elevenLabsPayload);
+
     const elevenLabsResponse = await fetch('https://api.elevenlabs.io/v1/convai/conversation', {
       method: 'POST',
       headers: {
         'xi-api-key': elevenLabsApiKey,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        // Agent configuration
-        agent_id: process.env.ELEVENLABS_AGENT_ID || 'default-agent',
-
-        // Call configuration
-        phone_number: phone,
-
-        // Metadata for tracking
-        metadata: {
-          patient_id: patientId,
-          campaign_id: campaignId,
-          study_id: studyId,
-        },
-
-        // Initial context for the AI agent
-        system_prompt: `You are a clinical research coordinator calling to screen a patient for the ${studyId} clinical trial.
-Be professional, empathetic, and clear. Verify patient information, explain the study, and assess initial eligibility.`,
-      }),
+      body: JSON.stringify(elevenLabsPayload),
     });
 
+    console.log('Eleven Labs response status:', elevenLabsResponse.status);
+
     if (!elevenLabsResponse.ok) {
-      const errorData = await elevenLabsResponse.json();
-      console.error('Eleven Labs API error:', errorData);
+      const errorText = await elevenLabsResponse.text();
+      console.error('Eleven Labs API error:', errorText);
+
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch (e) {
+        errorData = { message: errorText };
+      }
+
       return NextResponse.json(
-        { error: 'Failed to initiate call with Eleven Labs', details: errorData },
+        {
+          error: 'Failed to initiate call with Eleven Labs',
+          details: errorData,
+          status: elevenLabsResponse.status
+        },
         { status: elevenLabsResponse.status }
       );
     }
 
     const callData = await elevenLabsResponse.json();
+    console.log('Eleven Labs call initiated successfully:', callData);
 
     return NextResponse.json({
       success: true,
@@ -72,7 +93,11 @@ Be professional, empathetic, and clear. Verify patient information, explain the 
   } catch (error) {
     console.error('Error initiating call:', error);
     return NextResponse.json(
-      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      {
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      },
       { status: 500 }
     );
   }
