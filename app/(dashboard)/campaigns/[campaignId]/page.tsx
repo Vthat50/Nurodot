@@ -587,10 +587,10 @@ export default function CampaignDetailPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => window.location.href = `tel:${patient.phone}`}
+                        onClick={() => handleInitiateAICall(patient)}
                       >
                         <Phone className="h-3 w-3 mr-1" />
-                        Call
+                        Call Patient
                       </Button>
 
                       <Button
