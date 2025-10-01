@@ -83,6 +83,7 @@ export default function CampaignDetailPage() {
   const [contactNotes, setContactNotes] = useState("")
   const [newStatus, setNewStatus] = useState<CampaignPatient['status']>('contacted')
   const [isUpdating, setIsUpdating] = useState(false)
+  const [selectedPatientsForCall, setSelectedPatientsForCall] = useState<string[]>([])
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [selectedCallTranscript, setSelectedCallTranscript] = useState<any | null>(null)
   const [overrideDialogOpen, setOverrideDialogOpen] = useState(false)
@@ -630,6 +631,7 @@ export default function CampaignDetailPage() {
 
           {/* Calls Tab - Configure Campaign */}
           <TabsContent value="calls" className="space-y-6 mt-6">
+            {/* Screening Questions Card */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
@@ -637,40 +639,23 @@ export default function CampaignDetailPage() {
                     <MessagesSquare className="h-5 w-5 text-purple-600" />
                     Screening Questions
                   </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => {
-                      const newQuestion = prompt('Add new screening question:')
-                      if (newQuestion && campaign.screeningCriteria) {
-                        const newId = Math.max(...campaign.screeningCriteria.screeningQuestions.map(q => q.id), 0) + 1
-                        const updatedCriteria = {
-                          ...campaign.screeningCriteria,
-                          screeningQuestions: [
-                            ...campaign.screeningCriteria.screeningQuestions,
-                            { id: newId, question: newQuestion }
-                          ]
-                        }
-                        updateScreeningCriteria(campaignId, updatedCriteria)
+                  <Button variant="outline" onClick={() => {
+                    const newQuestion = prompt('Add new screening question:')
+                    if (newQuestion && campaign.screeningCriteria) {
+                      const newId = Math.max(...campaign.screeningCriteria.screeningQuestions.map(q => q.id), 0) + 1
+                      const updatedCriteria = {
+                        ...campaign.screeningCriteria,
+                        screeningQuestions: [
+                          ...campaign.screeningCriteria.screeningQuestions,
+                          { id: newId, question: newQuestion }
+                        ]
                       }
-                    }}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Question
-                    </Button>
-                    <Button onClick={() => {
-                      const allPatients = campaign.patients.filter(p => p.phone && p.phone !== '(555) 123-4567')
-                      if (allPatients.length === 0) {
-                        alert('No patients with valid phone numbers to call')
-                        return
-                      }
-                      if (confirm(`Send AI calls to ${allPatients.length} patients?`)) {
-                        Promise.all(allPatients.map(patient => handleInitiateAICall(patient)))
-                          .then(() => alert(`✅ Initiated ${allPatients.length} AI calls successfully`))
-                          .catch(err => alert(`❌ Error initiating bulk calls: ${err.message}`))
-                      }
-                    }}>
-                      <Phone className="h-4 w-4 mr-2" />
-                      Send Bulk Call
-                    </Button>
-                  </div>
+                      updateScreeningCriteria(campaignId, updatedCriteria)
+                    }
+                  }}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Question
+                  </Button>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -721,6 +706,108 @@ export default function CampaignDetailPage() {
                     <p>No screening questions yet. Click "Add Question" to create one.</p>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Select Patients for Bulk Call */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-blue-600" />
+                    Select Patients for Bulk Call
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => {
+                      const validPatients = campaign.patients.filter(p => p.phone && p.phone !== '(555) 123-4567')
+                      setSelectedPatientsForCall(validPatients.map(p => p.id))
+                    }}>
+                      Select All ({campaign.patients.filter(p => p.phone && p.phone !== '(555) 123-4567').length})
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setSelectedPatientsForCall([])}>
+                      Clear Selection
+                    </Button>
+                    <Button
+                      disabled={selectedPatientsForCall.length === 0}
+                      onClick={() => {
+                        const selectedPatients = campaign.patients.filter(p => selectedPatientsForCall.includes(p.id))
+                        if (confirm(`Send AI calls to ${selectedPatients.length} selected patients?`)) {
+                          Promise.all(selectedPatients.map(patient => handleInitiateAICall(patient)))
+                            .then(() => {
+                              alert(`✅ Initiated ${selectedPatients.length} AI calls successfully`)
+                              setSelectedPatientsForCall([])
+                            })
+                            .catch(err => alert(`❌ Error initiating bulk calls: ${err.message}`))
+                        }
+                      }}
+                    >
+                      <Phone className="h-4 w-4 mr-2" />
+                      Send Bulk Call ({selectedPatientsForCall.length})
+                    </Button>
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {campaign.patients.map((patient) => {
+                    const isValidPhone = patient.phone && patient.phone !== '(555) 123-4567'
+                    const isSelected = selectedPatientsForCall.includes(patient.id)
+
+                    return (
+                      <div
+                        key={patient.id}
+                        className={`border rounded-lg p-4 transition-all ${
+                          isSelected ? 'bg-blue-50 border-blue-300' : 'bg-slate-50 border-slate-200'
+                        } ${!isValidPhone ? 'opacity-50' : 'cursor-pointer hover:border-blue-200'}`}
+                        onClick={() => {
+                          if (isValidPhone) {
+                            setSelectedPatientsForCall(prev =>
+                              prev.includes(patient.id)
+                                ? prev.filter(id => id !== patient.id)
+                                : [...prev, patient.id]
+                            )
+                          }
+                        }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            disabled={!isValidPhone}
+                            onChange={(e) => {
+                              e.stopPropagation()
+                              if (isValidPhone) {
+                                setSelectedPatientsForCall(prev =>
+                                  e.target.checked
+                                    ? [...prev, patient.id]
+                                    : prev.filter(id => id !== patient.id)
+                                )
+                              }
+                            }}
+                            className="h-4 w-4 rounded border-slate-300"
+                          />
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <h4 className="font-semibold text-slate-900">{patient.name}</h4>
+                                <p className="text-sm text-slate-600">
+                                  Phone: {patient.phone}
+                                  {!isValidPhone && <span className="text-red-600 ml-2">(Invalid)</span>}
+                                </p>
+                                <p className="text-xs text-slate-500">
+                                  {patient.lastContactDate ? `Last contact: ${patient.lastContactDate}` : 'No calls yet'}
+                                </p>
+                              </div>
+                              <Badge className={statusConfig[patient.status].color}>
+                                {statusConfig[patient.status].label}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
