@@ -325,8 +325,10 @@ export default function CampaignDetailPage() {
 
   const handleInitiateAICall = async (patient: CampaignPatient) => {
     try {
+      console.log('Initiating AI call for patient:', patient);
+
       // Call your backend API to initiate AI call
-      const response = await fetch('/api/initiate-call', {
+      const response = await fetch('/api/call-patient', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -337,10 +339,13 @@ export default function CampaignDetailPage() {
         })
       })
 
+      const data = await response.json();
+      console.log('API response:', data);
+
       if (response.ok) {
-        alert(`AI call initiated to ${patient.name}`)
+        alert(`✅ AI call initiated successfully to ${patient.name} at ${patient.phone}\n\nCall ID: ${data.callId || 'N/A'}`)
         // Update patient status to "AI Call Initiated"
-        updatePatientStatus(campaignId, patient.id, 'contacted', 'AI call initiated')
+        updatePatientStatus(campaignId, patient.id, 'contacted', 'AI call initiated via Eleven Labs')
 
         // Also update in patient context
         const contextPatient = patients.find(p => p.id === patient.id)
@@ -349,9 +354,13 @@ export default function CampaignDetailPage() {
             status: 'AI Call Initiated'
           })
         }
+      } else {
+        console.error('Failed to initiate call:', data);
+        alert(`❌ Failed to initiate AI call\n\nError: ${data.error || 'Unknown error'}\n\nDetails: ${JSON.stringify(data.details || {}, null, 2)}`)
       }
     } catch (error) {
-      alert('Failed to initiate AI call')
+      console.error('Error initiating AI call:', error);
+      alert(`❌ Failed to initiate AI call\n\nError: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
@@ -587,10 +596,10 @@ export default function CampaignDetailPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => window.location.href = `tel:${patient.phone}`}
+                        onClick={() => handleInitiateAICall(patient)}
                       >
                         <Phone className="h-3 w-3 mr-1" />
-                        Call
+                        Call Patient
                       </Button>
 
                       <Button

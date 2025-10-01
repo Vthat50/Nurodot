@@ -42,7 +42,7 @@ const mockPatientData: Record<string, any> = {
     race: 'Caucasian',
     ethnicity: 'Not Hispanic or Latino',
     contact: {
-      phone: '(555) 123-4567',
+      phone: '+12179791384',
       email: 'john.smith@email.com',
       address: '123 Main St, Boston, MA 02101',
       emergencyContact: 'Jane Smith (Spouse) - (555) 987-6543'

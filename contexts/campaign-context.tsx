@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useState } from 'react'
+import React, { createContext, useContext, useState, useEffect } from 'react'
 
 export interface CampaignPatient {
   id: string
@@ -42,9 +42,54 @@ interface CampaignContextType {
 
 const CampaignContext = createContext<CampaignContextType | undefined>(undefined)
 
+// Mock campaign for CLARITY-AD with JOHN SMITH
+const mockClarityADCampaign: Campaign = {
+  id: 'CLARITY-AD-SCREENING-001',
+  studyId: 'CLARITY-AD',
+  studyName: 'CLARITY-AD',
+  name: 'CLARITY-AD Screening Campaign',
+  createdDate: '2025-09-20',
+  patients: [
+    {
+      id: 'P001',
+      name: 'JOHN SMITH',
+      age: 67,
+      gender: 'Male',
+      phone: '+12179791384',
+      email: 'john.smith@email.com',
+      status: 'not_contacted',
+    }
+  ],
+  totalPatients: 1,
+  contacted: 0,
+  interested: 0,
+  scheduled: 0,
+  enrolled: 0
+}
+
 export function CampaignProvider({ children }: { children: React.ReactNode }) {
-  const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  // Initialize campaigns from localStorage or use mock data
+  // Changed key to 'campaigns_v2' to force reload with correct phone number
+  const [campaigns, setCampaigns] = useState<Campaign[]>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('campaigns_v2')
+      if (stored) {
+        return JSON.parse(stored)
+      }
+      // Clear old cache
+      localStorage.removeItem('campaigns')
+    }
+    return [mockClarityADCampaign]
+  })
+
   const [currentCampaign, setCurrentCampaign] = useState<Campaign | null>(null)
+
+  // Persist campaigns to localStorage whenever they change
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('campaigns_v2', JSON.stringify(campaigns))
+    }
+  }, [campaigns])
 
   const getCampaignById = (id: string) => {
     return campaigns.find(c => c.id === id)
