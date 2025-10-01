@@ -86,6 +86,7 @@ export default function CampaignDetailPage() {
   const [selectedPatientsForCall, setSelectedPatientsForCall] = useState<string[]>([])
   const [isAgentScriptExpanded, setIsAgentScriptExpanded] = useState(true)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [isMounted, setIsMounted] = useState(false)
   const [selectedCallTranscript, setSelectedCallTranscript] = useState<any | null>(null)
   const [overrideDialogOpen, setOverrideDialogOpen] = useState(false)
   const [overrideTag, setOverrideTag] = useState<string>("")
@@ -141,15 +142,14 @@ export default function CampaignDetailPage() {
     recurringDays: 0
   })
 
-  // Initialize dates on client side only
+  // Initialize dates and mounted state on client side only
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const now = new Date()
-      setSelectedDate(now)
-      setLastSyncTime(now)
-      setSchedulingSettings(prev => ({ ...prev, date: now }))
-      setNewSlot(prev => ({ ...prev, date: now }))
-    }
+    setIsMounted(true)
+    const now = new Date()
+    setSelectedDate(now)
+    setLastSyncTime(now)
+    setSchedulingSettings(prev => ({ ...prev, date: now }))
+    setNewSlot(prev => ({ ...prev, date: now }))
   }, [])
 
   // Load campaign by ID on mount
@@ -407,6 +407,18 @@ export default function CampaignDetailPage() {
       const updatedCampaign = getCampaignById(campaignId)
       setCampaign(updatedCampaign || null)
     }, 500)
+  }
+
+  // Prevent hydration mismatch by not rendering until mounted
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-slate-600">Loading campaign...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
