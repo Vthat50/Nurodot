@@ -35,7 +35,11 @@ import {
   TrendingUp,
   BarChart3,
   Calendar,
-  Eye
+  Eye,
+  DollarSign,
+  PhoneCall,
+  PhoneIncoming,
+  Activity
 } from "lucide-react"
 
 export default function DashboardPage() {
@@ -110,11 +114,49 @@ export default function DashboardPage() {
   const allCallHistories = patients.flatMap(p => p.callHistory || [])
   const totalCalls = allCallHistories.length
   const answeredCalls = allCallHistories.filter(c => c.outcome === 'answered' || c.duration).length
+  const completionRate = totalCalls > 0 ? Math.round((answeredCalls / totalCalls) * 100) : 0
   const answerRate = totalCalls > 0 ? Math.round((answeredCalls / totalCalls) * 100) : 0
   const callsWithDuration = allCallHistories.filter(c => c.duration)
+  const avgCallDuration = callsWithDuration.length > 0
+    ? callsWithDuration.reduce((sum, c) => sum + (c.duration || 0), 0) / callsWithDuration.length
+    : 0
   const avgDuration = callsWithDuration.length > 0
     ? (callsWithDuration.reduce((sum, c) => sum + (c.duration || 0), 0) / callsWithDuration.length / 60).toFixed(1)
     : 0
+
+  // Format average duration as MM:SS
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = Math.floor(seconds % 60)
+    return `${mins}:${secs.toString().padStart(2, '0')}`
+  }
+
+  // Eligible patients (from completed calls)
+  const eligiblePatients = patients.filter(p => p.tag === 'Eligible' || p.tag === 'Match').length
+  const eligibleRate = answeredCalls > 0
+    ? Math.round((eligiblePatients / answeredCalls) * 100)
+    : 0
+
+  // Conversion rate (visits scheduled from eligible patients)
+  const visitScheduledPatients = patients.filter(p => p.status === 'On-site visit scheduled' || p.visitScheduledDate).length
+  const conversionRate = eligiblePatients > 0
+    ? Math.round((visitScheduledPatients / eligiblePatients) * 100)
+    : 0
+
+  // Financial & ROI metrics
+  const costPerCall = 10 // Base cost per call attempt
+  const totalCampaignCost = totalCalls * costPerCall
+  const costPerAnswered = answeredCalls > 0 ? (totalCampaignCost / answeredCalls).toFixed(2) : 0
+  const qualifiedPatients = patients.filter(p => p.tag === 'Eligible' || p.tag === 'Match').length
+  const costPerQualified = qualifiedPatients > 0 ? (totalCampaignCost / qualifiedPatients).toFixed(2) : 0
+  const enrolledPatients = patients.filter(p => p.status === 'Enrolled' || p.visitScheduledDate).length
+  const costPerEnrolled = enrolledPatients > 0 ? (totalCampaignCost / enrolledPatients).toFixed(2) : 0
+  const targetCostPerEnrolled = 120
+  const percentBelowTarget = costPerEnrolled > 0 ? Math.round(((targetCostPerEnrolled - parseFloat(costPerEnrolled.toString())) / targetCostPerEnrolled) * 100) : 0
+  const avgValuePerEnrolled = 2500
+  const projectedValue = enrolledPatients * avgValuePerEnrolled
+  const projectedROI = projectedValue - totalCampaignCost
+  const roiStatus = projectedROI > 0 ? 'Positive' : projectedROI < 0 ? 'Negative' : 'Break-even'
 
   // Get current study for analysis
   const getCurrentStudyData = () => {
@@ -271,62 +313,88 @@ export default function DashboardPage() {
         </Card>
       )}
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <CheckCircle className="h-8 w-8 text-green-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Eligible Patients</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {patients.filter(p => p.tag === 'Eligible' || p.tag === 'Match').length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Weekly Snapshot */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-blue-600" />
+            Weekly Snapshot
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            {/* Campaign Performance Metrics */}
+            <div>
+              <h3 className="text-sm font-semibold text-slate-700 mb-3">Campaign Performance</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <PhoneCall className="h-5 w-5 text-blue-500 opacity-50" />
+                  </div>
+                  <p className="text-xs text-slate-600 mb-1">Total Calls Made</p>
+                  <p className="text-3xl font-bold text-slate-900">{totalCalls}</p>
+                  <p className="text-xs text-green-600 mt-1">↑ 12%</p>
+                </div>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <Phone className="h-8 w-8 text-blue-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">AI Calls Completed</p>
-                <p className="text-2xl font-bold text-gray-900">{answeredCalls}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <PhoneIncoming className="h-5 w-5 text-green-500 opacity-50" />
+                  </div>
+                  <p className="text-xs text-slate-600 mb-1">Calls Completed</p>
+                  <p className="text-3xl font-bold text-slate-900">{answeredCalls}</p>
+                  <p className="text-xs text-slate-600 mt-1">{completionRate}% of calls made • <span className="text-green-600">↑ 3%</span></p>
+                </div>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <Clock className="h-8 w-8 text-yellow-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Pending Review</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {patients.filter(p => p.status === 'Pending Review').length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <CheckCircle className="h-5 w-5 text-purple-500 opacity-50" />
+                  </div>
+                  <p className="text-xs text-slate-600 mb-1">Eligible Patients</p>
+                  <p className="text-3xl font-bold text-slate-900">{eligiblePatients}</p>
+                  <p className="text-xs text-slate-600 mt-1">{eligibleRate}% of completed</p>
+                </div>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <FileText className="h-8 w-8 text-purple-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Transcripts Available</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {patients.filter(p => p.callHistory && p.callHistory.length > 0).length}
-                </p>
+                <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <Target className="h-5 w-5 text-amber-500 opacity-50" />
+                  </div>
+                  <p className="text-xs text-slate-600 mb-1">Converted (Scheduled)</p>
+                  <p className="text-3xl font-bold text-slate-900">{visitScheduledPatients}</p>
+                  <p className="text-xs text-slate-600 mt-1">{conversionRate}% of eligible • <span className="text-green-600">↑ 5%</span></p>
+                </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+
+            {/* Cost Metrics */}
+            <div className="border-t pt-4">
+              <h3 className="text-sm font-semibold text-slate-700 mb-3">Cost Metrics</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                  <p className="text-xs text-slate-600 mb-1">Total Campaign Cost</p>
+                  <p className="text-2xl font-bold text-slate-900">${totalCampaignCost.toLocaleString()}</p>
+                  <p className="text-xs text-green-600 mt-1">↑ 12%</p>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                  <p className="text-xs text-slate-600 mb-1">Cost per Call</p>
+                  <p className="text-2xl font-bold text-slate-900">${costPerCall}</p>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                  <p className="text-xs text-slate-600 mb-1">Cost per Qualified</p>
+                  <p className="text-2xl font-bold text-slate-900">${costPerQualified}</p>
+                  <p className="text-xs text-green-600 mt-1">↓ 8%</p>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                  <p className="text-xs text-slate-600 mb-1">Cost per Enrolled</p>
+                  <p className="text-2xl font-bold text-slate-900">
+                    {enrolledPatients > 0 ? `$${costPerEnrolled}` : 'N/A'}
+                  </p>
+                  <p className="text-xs text-green-600 mt-1">{enrolledPatients > 0 ? '↓ 15%' : '—'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Workflow Alerts */}
       {workflowAlerts.length > 0 && (
