@@ -29,6 +29,9 @@ export interface Study {
   currentEnrollment: number
   protocolFile?: File
   criteria?: StudyCriteria
+  principalInvestigator?: string
+  status?: string
+  enrollmentDeadline?: Date
 }
 
 interface StudyContextType {
@@ -51,6 +54,9 @@ const mockStudies: Study[] = [
     phase: "Phase III",
     enrollmentTarget: 150,
     currentEnrollment: 45,
+    principalInvestigator: "Dr. Sarah Chen, MD PhD",
+    status: "Active",
+    enrollmentDeadline: new Date("2025-12-31"),
   },
   {
     id: "GRADUATE-I",
@@ -59,6 +65,9 @@ const mockStudies: Study[] = [
     phase: "Phase III",
     enrollmentTarget: 200,
     currentEnrollment: 0,
+    principalInvestigator: "Dr. Michael Rodriguez, MD",
+    status: "Active",
+    enrollmentDeadline: new Date("2026-06-30"),
   },
 ]
 

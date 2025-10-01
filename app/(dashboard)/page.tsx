@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React from "react"
 import { useRouter } from "next/navigation"
 import { useStudy } from "@/contexts/study-context"
 import { usePatients } from "@/contexts/patient-context"
@@ -8,14 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import {
   Users,
   Phone,
@@ -23,16 +15,13 @@ import {
   CheckCircle,
   Clock,
   AlertCircle,
-  Search,
   Bell,
   ArrowRight,
   Upload,
-  Download,
   ChevronRight,
   Home,
   Beaker,
   Target,
-  TrendingUp,
   BarChart3,
   Calendar,
   Eye,
@@ -47,19 +36,8 @@ export default function DashboardPage() {
   const { studies, currentStudy, setCurrentStudy } = useStudy()
   const { patients, getPatientsByStudy } = usePatients()
 
-  const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState<string>("all")
-  const [tagFilter, setTagFilter] = useState<string>("all")
-  const [selectedStudyForAnalysis, setSelectedStudyForAnalysis] = useState(currentStudy?.id || "all")
-
-  // Filter patients
-  const filteredPatients = patients.filter(patient => {
-    const matchesSearch = patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         patient.email?.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesStatus = statusFilter === "all" || patient.status === statusFilter
-    const matchesTag = tagFilter === "all" || patient.tag === tagFilter
-    return matchesSearch && matchesStatus && matchesTag
-  })
+  // Cost per call constant
+  const costPerCall = 10
 
   // Calculate metrics per study
   const studyMetrics = studies.map(study => {
@@ -81,6 +59,16 @@ export default function DashboardPage() {
     ).length
     const visitScheduled = patientsScheduled
 
+    // Calculate total calls for this study
+    const studyCallHistories = studyPatients.flatMap(p => p.callHistory || [])
+    const totalStudyCalls = studyCallHistories.length
+    const totalCallCost = totalStudyCalls * costPerCall
+
+    // Calculate days until enrollment deadline
+    const daysUntilDeadline = study.enrollmentDeadline
+      ? Math.ceil((study.enrollmentDeadline.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+      : null
+
     return {
       study,
       leadsIngested,
@@ -88,6 +76,8 @@ export default function DashboardPage() {
       patientsScheduled,
       patientsIncluded,
       pendingReview,
+      totalCallCost,
+      daysUntilDeadline,
       funnel: { leads, called, answered, prescreened, visitScheduled }
     }
   })
@@ -144,7 +134,6 @@ export default function DashboardPage() {
     : 0
 
   // Financial & ROI metrics
-  const costPerCall = 10 // Base cost per call attempt
   const totalCampaignCost = totalCalls * costPerCall
   const costPerAnswered = answeredCalls > 0 ? (totalCampaignCost / answeredCalls).toFixed(2) : 0
   const qualifiedPatients = patients.filter(p => p.tag === 'Eligible' || p.tag === 'Match').length
@@ -157,34 +146,6 @@ export default function DashboardPage() {
   const projectedValue = enrolledPatients * avgValuePerEnrolled
   const projectedROI = projectedValue - totalCampaignCost
   const roiStatus = projectedROI > 0 ? 'Positive' : projectedROI < 0 ? 'Negative' : 'Break-even'
-
-  // Get current study for analysis
-  const getCurrentStudyData = () => {
-    if (selectedStudyForAnalysis === "all") {
-      const totalLeads = studyMetrics.reduce((sum, m) => sum + m.leadsIngested, 0)
-      const totalCalled = studyMetrics.reduce((sum, m) => sum + m.patientsCalled, 0)
-      const totalAnswered = studyMetrics.reduce((sum, m) => sum + m.funnel.answered, 0)
-      const totalPrescreened = studyMetrics.reduce((sum, m) => sum + m.funnel.prescreened, 0)
-      const totalScheduled = studyMetrics.reduce((sum, m) => sum + m.patientsScheduled, 0)
-
-      return {
-        leadsIngested: totalLeads,
-        patientsCalled: totalCalled,
-        patientsAnswered: totalAnswered,
-        patientsPrescreened: totalPrescreened,
-        visitScheduled: totalScheduled
-      }
-    }
-
-    const metric = studyMetrics.find(m => m.study.id === selectedStudyForAnalysis) || studyMetrics[0]
-    return {
-      leadsIngested: metric?.leadsIngested || 0,
-      patientsCalled: metric?.patientsCalled || 0,
-      patientsAnswered: metric?.funnel.answered || 0,
-      patientsPrescreened: metric?.funnel.prescreened || 0,
-      visitScheduled: metric?.patientsScheduled || 0
-    }
-  }
 
   // Generate workflow alerts
   const workflowAlerts = []
@@ -433,56 +394,13 @@ export default function DashboardPage() {
         </Card>
       )}
 
-      {/* Study Selector & Recruitment Funnel */}
+      {/* Studies Overview */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Recruitment Funnel
-            </CardTitle>
-            <div className="flex items-center gap-4">
-              <label className="text-sm font-medium text-gray-700">Select Study:</label>
-              <Select
-                value={selectedStudyForAnalysis}
-                onValueChange={(value) => {
-                  setSelectedStudyForAnalysis(value)
-                  if (value !== "all") {
-                    const study = studies.find(s => s.id === value)
-                    if (study) setCurrentStudy(study)
-                  }
-                }}
-              >
-                <SelectTrigger className="w-[300px]">
-                  <SelectValue placeholder="Select a study" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Studies Combined</SelectItem>
-                  {studies.map(study => (
-                    <SelectItem key={study.id} value={study.id}>
-                      {study.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {selectedStudyForAnalysis !== "all" && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const study = studies.find(s => s.id === selectedStudyForAnalysis)
-                    if (study) {
-                      setCurrentStudy(study)
-                      router.push('/ingest/detail')
-                    }
-                  }}
-                >
-                  <Eye className="h-3 w-3 mr-1" />
-                  View Details
-                </Button>
-              )}
-            </div>
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <Beaker className="h-5 w-5" />
+            Studies ({studies.length})
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {studies.length === 0 ? (
@@ -496,162 +414,86 @@ export default function DashboardPage() {
               </Button>
             </div>
           ) : (
-            (() => {
-              // Get selected study data or aggregate all studies
-              let currentData
-              if (selectedStudyForAnalysis === "all") {
-                const totalLeads = studyMetrics.reduce((sum, m) => sum + m.leadsIngested, 0)
-                const totalCalled = studyMetrics.reduce((sum, m) => sum + m.patientsCalled, 0)
-                const totalAnswered = studyMetrics.reduce((sum, m) => sum + m.funnel.answered, 0)
-                const totalPrescreened = studyMetrics.reduce((sum, m) => sum + m.funnel.prescreened, 0)
-                const totalScheduled = studyMetrics.reduce((sum, m) => sum + m.patientsScheduled, 0)
-
-                currentData = {
-                  leadsIngested: totalLeads,
-                  patientsCalled: totalCalled,
-                  patientsAnswered: totalAnswered,
-                  patientsPrescreened: totalPrescreened,
-                  visitScheduled: totalScheduled
-                }
-              } else {
-                const metric = studyMetrics.find(m => m.study.id === selectedStudyForAnalysis)
-                if (metric) {
-                  currentData = {
-                    leadsIngested: metric.leadsIngested,
-                    patientsCalled: metric.patientsCalled,
-                    patientsAnswered: metric.funnel.answered,
-                    patientsPrescreened: metric.funnel.prescreened,
-                    visitScheduled: metric.patientsScheduled
-                  }
-                } else {
-                  currentData = {
-                    leadsIngested: 0,
-                    patientsCalled: 0,
-                    patientsAnswered: 0,
-                    patientsPrescreened: 0,
-                    visitScheduled: 0
-                  }
-                }
-              }
-
-              return (
-                <div className="space-y-6">
-                  {/* Horizontal Funnel Chart */}
-                  <div className="grid grid-cols-5 gap-2">
-                    <div className="text-center">
-                      <div className="bg-slate-100 p-4 rounded-l-lg border border-slate-300">
-                        <div className="text-2xl font-bold text-slate-800">{currentData.leadsIngested}</div>
-                        <div className="text-xs text-slate-700 mt-1">Leads</div>
+            <div className="space-y-4">
+              {studyMetrics.map(({ study, leadsIngested, patientsCalled, patientsScheduled, patientsIncluded, pendingReview, totalCallCost, daysUntilDeadline }) => (
+                <div key={study.id} className="border rounded-lg p-6 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-xl font-semibold">{study.title}</h3>
+                        <Badge className={study.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+                          {study.status}
+                        </Badge>
+                        <Badge variant="outline">{study.phase}</Badge>
+                        {pendingReview > 0 && (
+                          <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300 animate-pulse">
+                            <AlertCircle className="h-3 w-3 mr-1" />
+                            {pendingReview} Pending Review
+                          </Badge>
+                        )}
+                        {daysUntilDeadline !== null && (
+                          <Badge variant="outline" className={`${daysUntilDeadline < 30 ? 'bg-red-50 text-red-700 border-red-200' : daysUntilDeadline < 90 ? 'bg-orange-50 text-orange-700 border-orange-200' : 'bg-slate-50 text-slate-700 border-slate-200'}`}>
+                            <Calendar className="h-3 w-3 mr-1" />
+                            {daysUntilDeadline > 0 ? `${daysUntilDeadline} days until deadline` : 'Deadline passed'}
+                          </Badge>
+                        )}
+                        <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                          <DollarSign className="h-3 w-3 mr-1" />
+                          {totalCallCost.toLocaleString()}
+                        </Badge>
+                      </div>
+                      <p className="text-gray-600 text-sm mb-2">{study.description}</p>
+                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <span>PI: {study.principalInvestigator}</span>
                       </div>
                     </div>
-                    <div className="text-center">
-                      <div className="bg-gray-100 p-4 border border-slate-300">
-                        <div className="text-2xl font-bold text-gray-800">{currentData.patientsCalled}</div>
-                        <div className="text-xs text-gray-700 mt-1">Called</div>
-                        <div className="text-xs mt-2 text-gray-600 font-medium">
-                          {currentData.leadsIngested > 0 ? Math.round((currentData.patientsCalled / currentData.leadsIngested) * 100) : 0}%
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <div className="bg-zinc-100 p-4 border border-slate-300">
-                        <div className="text-2xl font-bold text-zinc-800">{currentData.patientsAnswered}</div>
-                        <div className="text-xs text-zinc-700 mt-1">Answered</div>
-                        <div className="text-xs mt-2 text-zinc-600 font-medium">
-                          {currentData.patientsCalled > 0 ? Math.round((currentData.patientsAnswered / currentData.patientsCalled) * 100) : 0}%
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <div className="bg-stone-100 p-4 border border-slate-300">
-                        <div className="text-2xl font-bold text-stone-800">{currentData.patientsPrescreened}</div>
-                        <div className="text-xs text-stone-700 mt-1">Prescreened</div>
-                        <div className="text-xs mt-2 text-stone-600 font-medium">
-                          {currentData.patientsAnswered > 0 ? Math.round((currentData.patientsPrescreened / currentData.patientsAnswered) * 100) : 0}%
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <div className="bg-emerald-100 p-4 rounded-r-lg border border-slate-300">
-                        <div className="text-2xl font-bold text-emerald-800">{currentData.visitScheduled}</div>
-                        <div className="text-xs text-emerald-700 mt-1">Visit Scheduled</div>
-                        <div className="text-xs mt-2 text-emerald-600 font-medium">
-                          {currentData.patientsPrescreened > 0 ? Math.round((currentData.visitScheduled / currentData.patientsPrescreened) * 100) : 0}%
-                        </div>
-                      </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setCurrentStudy(study)
+                          router.push('/ingest/detail')
+                        }}
+                      >
+                        <Eye className="h-3 w-3 mr-1" />
+                        View Details
+                      </Button>
                     </div>
                   </div>
 
-                  {/* Key Metrics */}
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                      <div className="text-blue-700 font-bold text-2xl">
-                        {currentData.patientsCalled > 0 ? Math.round((currentData.patientsAnswered / currentData.patientsCalled) * 100) : 0}%
-                      </div>
-                      <div className="text-blue-600 text-sm mt-1">Call Answer Rate</div>
+                  {/* Study Metrics */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                    <div className="text-center bg-slate-50 p-3 rounded border">
+                      <div className="text-lg font-bold text-slate-700">{leadsIngested}</div>
+                      <div className="text-xs text-gray-600">Leads Ingested</div>
                     </div>
-                    <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                      <div className="text-green-700 font-bold text-2xl">
-                        {currentData.patientsAnswered > 0 ? Math.round((currentData.patientsPrescreened / currentData.patientsAnswered) * 100) : 0}%
-                      </div>
-                      <div className="text-green-600 text-sm mt-1">Prescreening Pass Rate</div>
+                    <div className="text-center bg-gray-50 p-3 rounded border">
+                      <div className="text-lg font-bold text-gray-700">{patientsCalled}</div>
+                      <div className="text-xs text-gray-600">Patients Called</div>
                     </div>
-                    <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                      <div className="text-purple-700 font-bold text-2xl">
-                        {currentData.patientsPrescreened > 0 ? Math.round((currentData.visitScheduled / currentData.patientsPrescreened) * 100) : 0}%
-                      </div>
-                      <div className="text-purple-600 text-sm mt-1">Visit Scheduling Rate</div>
+                    <div className="text-center bg-zinc-50 p-3 rounded border">
+                      <div className="text-lg font-bold text-zinc-700">{patientsScheduled}</div>
+                      <div className="text-xs text-gray-600">Visits Scheduled</div>
                     </div>
+                    <div className="text-center bg-stone-50 p-3 rounded border">
+                      <div className="text-lg font-bold text-stone-700">{patientsIncluded}</div>
+                      <div className="text-xs text-gray-600">Enrolled</div>
+                    </div>
+                  </div>
+
+                  {/* Enrollment Progress */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Enrollment Progress</span>
+                      <span>{study.currentEnrollment} / {study.enrollmentTarget} ({Math.round((study.currentEnrollment / study.enrollmentTarget) * 100)}%)</span>
+                    </div>
+                    <Progress value={(study.currentEnrollment / study.enrollmentTarget) * 100} className="h-2 bg-gray-200" />
                   </div>
                 </div>
-              )
-            })()
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Search and Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search patients by name or email..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+              ))}
             </div>
-            <Select value={tagFilter} onValueChange={setTagFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="All Tags" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Tags</SelectItem>
-                <SelectItem value="Match">Match</SelectItem>
-                <SelectItem value="Potential Match">Potential Match</SelectItem>
-                <SelectItem value="Eligible">Eligible</SelectItem>
-                <SelectItem value="Ineligible">Ineligible</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="All Statuses" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="Pending Review">Pending Review</SelectItem>
-                <SelectItem value="AI Call Initiated">AI Call Initiated</SelectItem>
-                <SelectItem value="On-site visit scheduled">Visit Scheduled</SelectItem>
-                <SelectItem value="Declined Participation">Declined</SelectItem>
-                <SelectItem value="Failed Screening">Failed Screening</SelectItem>
-                <SelectItem value="Enrolled">Enrolled</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          )}
         </CardContent>
       </Card>
 
