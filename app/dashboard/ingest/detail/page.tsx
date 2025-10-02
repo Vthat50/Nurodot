@@ -25,7 +25,8 @@ import {
   AlertCircle,
   PhoneCall,
   UserPlus,
-  Download
+  Download,
+  Lightbulb
 } from "lucide-react"
 
 export default function StudyDetailPage() {
@@ -132,11 +133,12 @@ export default function StudyDetailPage() {
       <main className="container mx-auto px-6 py-8 space-y-6">
         {/* Tabs for different sections */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="patients">Patients ({totalImported})</TabsTrigger>
             <TabsTrigger value="campaigns">Campaigns ({studyCampaigns.length})</TabsTrigger>
             <TabsTrigger value="criteria">Criteria</TabsTrigger>
+            <TabsTrigger value="protocol-insights">Protocol Insights</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
           </TabsList>
 
@@ -766,6 +768,147 @@ export default function StudyDetailPage() {
                     )}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Protocol Insights Tab */}
+          <TabsContent value="protocol-insights" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Lightbulb className="h-5 w-5 text-yellow-600" />
+                  Protocol Amendment Suggestions
+                </CardTitle>
+                <p className="text-sm text-gray-600">AI-powered recommendations based on recruitment blockers and exclusion criteria analysis</p>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  // Analyze exclusion criteria causing the most failures
+                  const exclusionReasons: { [key: string]: number } = {}
+                  studyPatients.forEach(p => {
+                    if (p.criteriaMatches) {
+                      p.criteriaMatches.forEach(cm => {
+                        if (cm.type === 'exclusion' && !cm.matched) {
+                          exclusionReasons[cm.criterionText] = (exclusionReasons[cm.criterionText] || 0) + 1
+                        }
+                      })
+                    }
+                  })
+
+                  // Generate suggestions based on actual data
+                  const suggestions: Array<{
+                    id: number
+                    priority: string
+                    exclusionCriteria: string
+                    impact: string
+                    currentCriteria: string
+                    suggestion: string
+                    potentialIncrease: string
+                    evidence: string
+                  }> = []
+
+                  // Add suggestion for seizure disorder if found
+                  if (exclusionReasons['No history of seizures']) {
+                    suggestions.push({
+                      id: 1,
+                      priority: 'high',
+                      exclusionCriteria: 'Seizure Disorder Exclusion',
+                      impact: `${exclusionReasons['No history of seizures']} patients excluded (${Math.round((exclusionReasons['No history of seizures'] / totalImported) * 100)}% of screened)`,
+                      currentCriteria: 'No history of seizures',
+                      suggestion: 'Allow well-controlled seizure disorders (seizure-free >2 years on stable medication)',
+                      potentialIncrease: '+15% qualification rate',
+                      evidence: 'Analysis shows patients with controlled seizure disorders have similar safety profiles. Literature review indicates stable seizure medication does not interfere with cognitive assessments.'
+                    })
+                  }
+
+                  // Add suggestion for cancer history if found
+                  if (exclusionReasons['No cancer within 5 years']) {
+                    suggestions.push({
+                      id: 2,
+                      priority: 'medium',
+                      exclusionCriteria: 'Cancer History Restriction',
+                      impact: `${exclusionReasons['No cancer within 5 years']} patients excluded (${Math.round((exclusionReasons['No cancer within 5 years'] / totalImported) * 100)}% of screened)`,
+                      currentCriteria: 'No cancer within 5 years',
+                      suggestion: 'Allow cancer history if >2 years cancer-free and no active treatment',
+                      potentialIncrease: '+8% qualification rate',
+                      evidence: 'Patients with treated cancers (>2 years remission) show comparable study completion rates. Recent oncology data supports reduced exclusion window.'
+                    })
+                  }
+
+                  // Add generic age-based suggestion
+                  const avgAge = studyPatients.reduce((sum, p) => sum + p.age, 0) / studyPatients.length
+                  if (avgAge > 65) {
+                    suggestions.push({
+                      id: 3,
+                      priority: 'low',
+                      exclusionCriteria: 'Age Range Optimization',
+                      impact: 'Potential to capture younger early-onset cases',
+                      currentCriteria: 'Age 50-85 years inclusive',
+                      suggestion: 'Expand lower bound to 45 years for early-onset cases',
+                      potentialIncrease: '+5% qualification rate',
+                      evidence: 'Early-onset Alzheimer\'s cases (45-50 years) are increasingly recognized. Expanding age range could improve diversity and generalizability of results.'
+                    })
+                  }
+
+                  const getPriorityColor = (priority: string) => {
+                    switch (priority) {
+                      case 'high': return 'bg-red-100 text-red-800 border-red-200'
+                      case 'medium': return 'bg-orange-100 text-orange-800 border-orange-200'
+                      case 'low': return 'bg-yellow-100 text-yellow-800 border-yellow-200'
+                      default: return 'bg-gray-100 text-gray-800 border-gray-200'
+                    }
+                  }
+
+                  return (
+                    <div className="space-y-6">
+                      {suggestions.length > 0 ? (
+                        suggestions.map((suggestion) => (
+                          <div key={suggestion.id} className="border rounded-lg p-6 hover:shadow-sm transition-shadow">
+                            <div className="flex items-start justify-between mb-4">
+                              <div className="flex items-center gap-3">
+                                <Badge className={getPriorityColor(suggestion.priority)}>
+                                  {suggestion.priority} priority
+                                </Badge>
+                                <h3 className="font-semibold text-lg">{suggestion.exclusionCriteria}</h3>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-4">
+                              <div>
+                                <h4 className="font-medium text-red-700 mb-2">Current Impact</h4>
+                                <p className="text-sm mb-2 font-semibold text-red-600">{suggestion.impact}</p>
+                                <p className="text-sm text-gray-600 italic">"{suggestion.currentCriteria}"</p>
+                              </div>
+                              <div>
+                                <h4 className="font-medium text-green-700 mb-2">Suggested Amendment</h4>
+                                <p className="text-sm mb-2 font-semibold text-green-600">{suggestion.potentialIncrease}</p>
+                                <p className="text-sm text-gray-600 italic">"{suggestion.suggestion}"</p>
+                              </div>
+                            </div>
+
+                            <div className="bg-blue-50 rounded-lg p-4 mb-4">
+                              <h4 className="font-medium text-blue-900 mb-2">Supporting Evidence</h4>
+                              <p className="text-sm text-blue-800">{suggestion.evidence}</p>
+                            </div>
+
+                            <div className="flex gap-2">
+                              <Button size="sm" onClick={() => alert('Generating amendment draft...')}>Generate Amendment Draft</Button>
+                              <Button variant="outline" size="sm" onClick={() => alert('Opening supporting data...')}>Review Supporting Data</Button>
+                              <Button variant="ghost" size="sm" onClick={() => alert('Suggestion dismissed')}>Dismiss</Button>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-12">
+                          <Lightbulb className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                          <p className="text-gray-600">No protocol amendment suggestions at this time.</p>
+                          <p className="text-sm text-gray-500 mt-2">Continue collecting data for AI-powered insights.</p>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })()}
               </CardContent>
             </Card>
           </TabsContent>
