@@ -236,7 +236,7 @@ const mockClarityADPatients: Patient[] = [
     source: 'EHR',
     studyId: 'CLARITY-AD',
     tag: 'Eligible',
-    status: 'AI Call Initiated',
+    status: 'No Answer',
     legacyStatus: 'calling',
     criteriaMatches: [
       { criterionId: 1, criterionText: 'Age 50-85 years inclusive', type: 'inclusion', matched: true, patientValue: '72 years', source: 'EHR' },
@@ -244,6 +244,14 @@ const mockClarityADPatients: Patient[] = [
       { criterionId: 3, criterionText: 'Positive amyloid status', type: 'inclusion', matched: true, patientValue: 'CSF positive', source: 'EHR' },
       { criterionId: 4, criterionText: 'No history of seizures', type: 'exclusion', matched: true, patientValue: 'No seizure history', source: 'EHR' },
     ],
+    callHistory: [{
+      id: 'call-002',
+      callDate: '2025-09-28',
+      callTime: '14:00',
+      duration: '0:00',
+      outcome: 'no_answer',
+      messages: []
+    }]
   },
   {
     id: 'CLR-003',
@@ -257,13 +265,21 @@ const mockClarityADPatients: Patient[] = [
     source: 'EHR',
     studyId: 'CLARITY-AD',
     tag: 'Match',
-    status: 'Pending Review',
+    status: 'No Answer',
     legacyStatus: 'qualified',
     criteriaMatches: [
       { criterionId: 1, criterionText: 'Age 50-85 years inclusive', type: 'inclusion', matched: true, patientValue: '65 years', source: 'EHR' },
       { criterionId: 2, criterionText: 'MMSE score 18-26 (mild to moderate)', type: 'inclusion', matched: true, patientValue: 'MMSE: 25', source: 'EHR' },
       { criterionId: 3, criterionText: 'Positive amyloid status', type: 'inclusion', matched: true, patientValue: 'Pending PET scan', source: 'EHR', notes: 'Scheduled for next week' },
     ],
+    callHistory: [{
+      id: 'call-003',
+      callDate: '2025-09-28',
+      callTime: '16:30',
+      duration: '0:00',
+      outcome: 'no_answer',
+      messages: []
+    }]
   },
   {
     id: 'CLR-004',
@@ -325,7 +341,7 @@ const mockClarityADPatients: Patient[] = [
       callDate: '2025-09-26',
       callTime: '15:00',
       duration: '12:10',
-      outcome: 'completed',
+      outcome: 'declined',
       messages: [
         { speaker: 'ai', text: 'Hello, may I speak with Linda Martinez?', timestamp: '15:00:00' },
         { speaker: 'patient', text: 'This is Linda.', timestamp: '15:00:04' },
@@ -337,6 +353,98 @@ const mockClarityADPatients: Patient[] = [
         { speaker: 'patient', text: 'I appreciate the call, but I don\'t think I can commit to that right now. Maybe in the future.', timestamp: '15:01:05' },
         { speaker: 'ai', text: 'I completely understand, Linda. We\'ll keep your information on file in case you change your mind. Is that okay?', timestamp: '15:01:15' },
         { speaker: 'patient', text: 'Yes, that\'s fine. Thank you.', timestamp: '15:01:25' },
+      ]
+    }]
+  },
+  {
+    id: 'CLR-006',
+    name: 'Dorothy Anderson',
+    age: 67,
+    gender: 'Female',
+    phone: '(555) 789-0123',
+    email: 'dorothy.a@email.com',
+    conditions: ['Mild Cognitive Impairment'],
+    medications: ['Vitamin B12', 'Omega-3'],
+    source: 'EHR',
+    studyId: 'CLARITY-AD',
+    tag: 'Match',
+    status: 'Voicemail Left',
+    legacyStatus: 'calling',
+    criteriaMatches: [
+      { criterionId: 1, criterionText: 'Age 50-85 years inclusive', type: 'inclusion', matched: true, patientValue: '67 years', source: 'EHR' },
+      { criterionId: 2, criterionText: 'MMSE score 18-26 (mild to moderate)', type: 'inclusion', matched: true, patientValue: 'MMSE: 22', source: 'EHR' },
+      { criterionId: 3, criterionText: 'Positive amyloid status', type: 'inclusion', matched: true, patientValue: 'PET positive', source: 'EHR' },
+    ],
+    callHistory: [{
+      id: 'call-006',
+      callDate: '2025-09-29',
+      callTime: '10:30',
+      duration: '0:00',
+      outcome: 'voicemail',
+      messages: []
+    }]
+  },
+  {
+    id: 'CLR-007',
+    name: 'George Wilson',
+    age: 74,
+    gender: 'Male',
+    phone: '(555) 890-1234',
+    email: 'george.w@email.com',
+    conditions: ['Early Alzheimer\'s Disease', 'Hypertension'],
+    medications: ['Donepezil 5mg', 'Amlodipine 5mg'],
+    source: 'EHR',
+    studyId: 'CLARITY-AD',
+    tag: 'Eligible',
+    status: 'Voicemail Left',
+    legacyStatus: 'calling',
+    criteriaMatches: [
+      { criterionId: 1, criterionText: 'Age 50-85 years inclusive', type: 'inclusion', matched: true, patientValue: '74 years', source: 'EHR' },
+      { criterionId: 2, criterionText: 'MMSE score 18-26 (mild to moderate)', type: 'inclusion', matched: true, patientValue: 'MMSE: 20', source: 'EHR' },
+      { criterionId: 3, criterionText: 'Positive amyloid status', type: 'inclusion', matched: true, patientValue: 'CSF positive', source: 'EHR' },
+    ],
+    callHistory: [{
+      id: 'call-007',
+      callDate: '2025-09-29',
+      callTime: '15:15',
+      duration: '0:00',
+      outcome: 'voicemail',
+      messages: []
+    }]
+  },
+  {
+    id: 'CLR-008',
+    name: 'Carol Davis',
+    age: 69,
+    gender: 'Female',
+    phone: '(555) 901-2345',
+    email: 'carol.d@email.com',
+    conditions: ['Prodromal Alzheimer\'s Disease'],
+    medications: ['Aricept 10mg'],
+    source: 'EHR',
+    studyId: 'CLARITY-AD',
+    tag: 'Potential Match',
+    status: 'Declined Participation',
+    legacyStatus: 'not_qualified',
+    criteriaMatches: [
+      { criterionId: 1, criterionText: 'Age 50-85 years inclusive', type: 'inclusion', matched: true, patientValue: '69 years', source: 'EHR' },
+      { criterionId: 2, criterionText: 'MMSE score 18-26 (mild to moderate)', type: 'inclusion', matched: true, patientValue: 'MMSE: 23', source: 'EHR' },
+      { criterionId: 3, criterionText: 'Positive amyloid status', type: 'inclusion', matched: true, patientValue: 'PET positive', source: 'EHR' },
+    ],
+    callHistory: [{
+      id: 'call-008',
+      callDate: '2025-09-27',
+      callTime: '13:45',
+      duration: '8:30',
+      outcome: 'declined',
+      messages: [
+        { speaker: 'ai', text: 'Hello, is this Carol Davis?', timestamp: '13:45:00' },
+        { speaker: 'patient', text: 'Yes, this is Carol.', timestamp: '13:45:05' },
+        { speaker: 'ai', text: 'Hi Carol, I\'m calling about the CLARITY-AD clinical trial. You may be eligible based on your medical records. Would you like to hear more?', timestamp: '13:45:10' },
+        { speaker: 'patient', text: 'I appreciate you calling, but I\'m not comfortable participating in clinical trials.', timestamp: '13:45:30' },
+        { speaker: 'ai', text: 'I understand completely. May I ask if there\'s a particular concern?', timestamp: '13:45:45' },
+        { speaker: 'patient', text: 'I just prefer not to take experimental medications. Thank you though.', timestamp: '13:46:00' },
+        { speaker: 'ai', text: 'That\'s perfectly understandable, Carol. Thank you for your time.', timestamp: '13:46:15' },
       ]
     }]
   },
