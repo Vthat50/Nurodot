@@ -41,9 +41,9 @@ export function MainNav() {
       items: [
         {
           name: "Home",
-          path: "/dashboard",
+          path: "/",
           icon: Home,
-          match: (path: string) => path === "/dashboard"
+          match: (path: string) => path === "/"
         }
       ]
     },
@@ -52,17 +52,17 @@ export function MainNav() {
       items: [
         {
           name: "Upload Protocol",
-          path: "/dashboard/ingest",
+          path: "/ingest",
           icon: Upload,
-          match: (path: string) => path === "/dashboard/ingest" && !path.includes("/patients"),
+          match: (path: string) => path === "/ingest" && !path.includes("/patients"),
           description: "Upload & extract protocols"
         },
         {
           name: "Manage Studies",
-          path: "/dashboard/ingest",
+          path: "/ingest",
           icon: Beaker,
           badge: studies.length,
-          match: (path: string) => path === "/dashboard/ingest" && !path.includes("/patients"),
+          match: (path: string) => path === "/ingest" && !path.includes("/patients"),
           description: "View all studies"
         }
       ]
@@ -72,16 +72,16 @@ export function MainNav() {
       items: [
         {
           name: "Import Patients",
-          path: "/dashboard/ingest/patients",
+          path: "/ingest/patients",
           icon: Users,
-          match: (path: string) => path === "/dashboard/ingest/patients" && !pathname.includes("[patientId]"),
+          match: (path: string) => path === "/ingest/patients" && !pathname.includes("[patientId]"),
           description: "Epic or CSV import"
         },
         {
           name: "Pre-Screen",
-          path: "/dashboard/ingest/patients",
+          path: "/ingest/patients",
           icon: Filter,
-          match: (path: string) => path === "/dashboard/ingest/patients" && !pathname.includes("[patientId]"),
+          match: (path: string) => path === "/ingest/patients" && !pathname.includes("[patientId]"),
           description: "Screen against criteria"
         }
       ]
@@ -91,10 +91,10 @@ export function MainNav() {
       items: [
         {
           name: "Screening Campaigns",
-          path: "/dashboard/campaigns",
+          path: "/campaigns",
           icon: Target,
           badge: studyCampaigns.length,
-          match: (path: string) => path === "/dashboard/campaigns" && !path.includes("[campaignId]"),
+          match: (path: string) => path === "/campaigns" && !path.includes("[campaignId]"),
           description: "Manage patient outreach"
         }
       ]
@@ -104,9 +104,9 @@ export function MainNav() {
       items: [
         {
           name: "Analytics",
-          path: "/dashboard/analytics",
+          path: "/analytics",
           icon: BarChart3,
-          match: (path: string) => path === "/dashboard/analytics",
+          match: (path: string) => path === "/analytics",
           description: "View recruitment metrics"
         }
       ]
