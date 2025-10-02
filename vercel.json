@@ -2,6 +2,13 @@
   "redirects": [
     {
       "source": "/",
+      "has": [
+        {
+          "type": "cookie",
+          "key": "visited",
+          "value": "(?!true).*"
+        }
+      ],
       "destination": "/landing",
       "permanent": false
     }
