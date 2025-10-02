@@ -2,11 +2,10 @@
   "redirects": [
     {
       "source": "/",
-      "has": [
+      "missing": [
         {
           "type": "cookie",
-          "key": "visited",
-          "value": "(?!true).*"
+          "key": "visited"
         }
       ],
       "destination": "/landing",
