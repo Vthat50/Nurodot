@@ -1,0 +1,2388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nurodot - AI Clinical Trial Recruitment</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --text: #000000;
+            --text-light: #666666;
+            --background: #FFFFFF;
+            --surface: #FAFAFA;
+            --border: #E5E5E5;
+            --primary: #2563EB;
+            --primary-light: #3B82F6;
+            --success: #10B981;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .btn-login {
+            background: transparent;
+            color: var(--text);
+            padding: 0.5rem 1.25rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .btn-login:hover {
+            background: var(--surface);
+            border-color: var(--text-light);
+        }
+
+        .language-selector {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .language-btn {
+            padding: 0.375rem 0.75rem;
+            border: 1px solid var(--border);
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .language-btn:hover {
+            background: var(--surface);
+        }
+
+        .language-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 0.5rem;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            min-width: 150px;
+            display: none;
+        }
+
+        .language-dropdown.active {
+            display: block;
+        }
+
+        .language-option {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .language-option:hover {
+            background: var(--surface);
+        }
+
+        .language-option:first-child {
+            border-radius: 8px 8px 0 0;
+        }
+
+        .language-option:last-child {
+            border-radius: 0 0 8px 8px;
+        }
+
+        .language-option.selected {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .nav-link {
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover {
+            color: var(--text);
+        }
+
+        .btn-demo {
+            background: var(--text);
+            color: white;
+            padding: 0.5rem 1.25rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-demo:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 8rem 2rem 4rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-light);
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--surface);
+        }
+
+        /* Product Demo Sections */
+        .demo-section {
+            padding: 4rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .demo-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6rem;
+            align-items: center;
+            margin-bottom: 8rem;
+        }
+
+        .demo-row.reverse {
+            direction: rtl;
+        }
+
+        .demo-row.reverse .demo-content {
+            direction: ltr;
+        }
+
+        .demo-content h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .demo-content p {
+            font-size: 1.125rem;
+            color: var(--text-light);
+            margin-bottom: 2rem;
+            line-height: 1.7;
+        }
+
+        .feature-list {
+            list-style: none;
+            space-y: 1rem;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .check-icon {
+            width: 20px;
+            height: 20px;
+            background: var(--success);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 3px;
+        }
+
+        .check-icon::after {
+            content: '✓';
+            color: white;
+            font-size: 12px;
+        }
+
+        /* Product Mockup Windows */
+        .mockup-window {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            direction: ltr;
+        }
+
+        .window-header {
+            background: var(--surface);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .window-dots {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .dot:nth-child(1) { background: #FF5F57; }
+        .dot:nth-child(2) { background: #FFBD2E; }
+        .dot:nth-child(3) { background: #28CA42; }
+
+        .window-title {
+            margin-left: auto;
+            font-size: 0.813rem;
+            color: var(--text-light);
+        }
+
+        .window-content {
+            padding: 2rem;
+            min-height: 400px;
+            position: relative;
+            background: var(--surface);
+        }
+
+        /* Database Scanner Animation */
+        .scanner-animation {
+            position: relative;
+        }
+
+        .scan-beam {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            animation: scan-down 3s linear infinite;
+        }
+
+        @keyframes scan-down {
+            from { top: 0; }
+            to { top: 100%; }
+        }
+
+        .patient-row {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            opacity: 0;
+            animation: fade-in 0.5s ease forwards;
+        }
+
+        .patient-row:nth-child(2) { animation-delay: 0.5s; }
+        .patient-row:nth-child(3) { animation-delay: 1s; }
+        .patient-row:nth-child(4) { animation-delay: 1.5s; }
+        .patient-row:nth-child(5) { animation-delay: 2s; }
+
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .patient-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .patient-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667EEA, #764BA2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .patient-details {
+            text-align: left;
+        }
+
+        .patient-name {
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .patient-meta {
+            font-size: 0.75rem;
+            color: var(--text-light);
+        }
+
+        .match-indicator {
+            padding: 0.25rem 0.75rem;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Interactive Demo Styles */
+        .demo-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .demo-buttons {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .demo-btn {
+            padding: 0.625rem 1.25rem;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 0.875rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .demo-btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .demo-btn-primary:hover {
+            background: var(--primary-light);
+        }
+
+        .demo-btn-outline {
+            background: white;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .demo-btn-outline:hover {
+            background: var(--surface);
+        }
+
+        .demo-btn-audio {
+            background: var(--success);
+            color: white;
+        }
+
+        .demo-btn-audio:hover {
+            background: #059669;
+        }
+
+        .demo-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .demo-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-light);
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--border);
+        }
+
+        .status-dot.active {
+            background: var(--success);
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .conversation-container {
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .conversation-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .conversation-container::-webkit-scrollbar-track {
+            background: var(--surface);
+            border-radius: 3px;
+        }
+
+        .conversation-container::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        .conversation-container::-webkit-scrollbar-thumb:hover {
+            background: var(--text-light);
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 1.5rem;
+            animation: slide-in 0.3s ease;
+        }
+
+        @keyframes slide-in {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.ai {
+            justify-content: flex-start;
+        }
+
+        .message.patient {
+            justify-content: flex-end;
+        }
+
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 0.75rem;
+        }
+
+        .message.ai .message-avatar {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary);
+            margin-right: 1rem;
+        }
+
+        .message.patient .message-avatar {
+            background: var(--border);
+            color: var(--text-light);
+            margin-left: 1rem;
+            order: 2;
+        }
+
+        .message-content {
+            max-width: 70%;
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .message.ai .message-content {
+            border-color: rgba(37, 99, 235, 0.2);
+            background: rgba(37, 99, 235, 0.05);
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .message-sender {
+            font-weight: 600;
+            font-size: 0.813rem;
+        }
+
+        .message-time {
+            font-size: 0.75rem;
+            color: var(--text-light);
+        }
+
+        .message-text {
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        .demo-placeholder {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-light);
+        }
+
+        .demo-placeholder svg {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 1rem;
+            opacity: 0.5;
+        }
+
+        /* Dashboard Animation */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .metric-change {
+            font-size: 0.813rem;
+            color: var(--success);
+            margin-top: 0.5rem;
+        }
+
+        /* Chart Animation */
+        .chart-container {
+            grid-column: span 2;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            height: 140px;
+        }
+
+        .chart-bars {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            height: 100px;
+            gap: 0.5rem;
+        }
+
+        .chart-bar {
+            flex: 1;
+            background: linear-gradient(to top, var(--primary), var(--primary-light));
+            border-radius: 4px 4px 0 0;
+            animation: grow-bar 1.5s ease-out forwards;
+            opacity: 0;
+        }
+
+        .chart-bar:nth-child(1) { height: 60%; animation-delay: 0.1s; }
+        .chart-bar:nth-child(2) { height: 80%; animation-delay: 0.2s; }
+        .chart-bar:nth-child(3) { height: 70%; animation-delay: 0.3s; }
+        .chart-bar:nth-child(4) { height: 90%; animation-delay: 0.4s; }
+        .chart-bar:nth-child(5) { height: 85%; animation-delay: 0.5s; }
+        .chart-bar:nth-child(6) { height: 95%; animation-delay: 0.6s; }
+        .chart-bar:nth-child(7) { height: 75%; animation-delay: 0.7s; }
+
+        @keyframes grow-bar {
+            from {
+                transform: scaleY(0);
+                opacity: 0;
+            }
+            to {
+                transform: scaleY(1);
+                opacity: 1;
+            }
+        }
+
+        /* Stats Section */
+        .stats-section {
+            padding: 4rem 2rem;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .stats-grid {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            text-align: center;
+        }
+
+        .stat {
+            padding: 1rem;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-light);
+            margin-top: 0.5rem;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            padding: 6rem 2rem;
+            text-align: center;
+        }
+
+        .cta-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .cta-title {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            letter-spacing: -0.02em;
+        }
+
+        .cta-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-light);
+            margin-bottom: 2rem;
+        }
+
+        .email-form {
+            display: flex;
+            gap: 0.5rem;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .email-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.938rem;
+        }
+
+        .email-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .btn-submit {
+            padding: 0.75rem 1.5rem;
+            background: var(--text);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Footer */
+        footer {
+            padding: 2rem;
+            text-align: center;
+            border-top: 1px solid var(--border);
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .footer-link {
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 0.875rem;
+        }
+
+        .footer-link:hover {
+            color: var(--text);
+        }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .demo-row {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+            }
+
+            .demo-row.reverse {
+                direction: ltr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .message-content {
+                max-width: 85%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <div class="logo">nurodot</div>
+            <div class="nav-links">
+                <a href="#scanner" class="nav-link" data-i18n="nav.scanner">Database Scanner</a>
+                <a href="#voice" class="nav-link" data-i18n="nav.voice">Voice AI</a>
+                <a href="#dashboard" class="nav-link" data-i18n="nav.dashboard">Dashboard</a>
+                <div class="language-selector">
+                    <button class="language-btn" id="languageBtn">
+                        <span id="currentLanguage">🇺🇸 EN</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="language-dropdown" id="languageDropdown">
+                        <div class="language-option selected" data-lang="en">
+                            🇺🇸 English
+                        </div>
+                        <div class="language-option" data-lang="es">
+                            🇪🇸 Español
+                        </div>
+                        <div class="language-option" data-lang="fr">
+                            🇫🇷 Français
+                        </div>
+                        <div class="language-option" data-lang="de">
+                            🇩🇪 Deutsch
+                        </div>
+                        <div class="language-option" data-lang="zh">
+                            🇨🇳 中文
+                        </div>
+                    </div>
+                </div>
+                <a href="/dashboard" class="btn-login" data-i18n="nav.login">Login</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+        <h1 data-i18n="hero.title">Find trial patients in seconds,<br>not months</h1>
+        <p class="hero-subtitle" data-i18n="hero.subtitle">
+            AI that scans your database, identifies eligible patients, and enrolls them through natural voice conversations.
+        </p>
+        <div class="hero-buttons">
+            <a href="#scanner" class="btn btn-primary" data-i18n="hero.seeHow">See How It Works</a>
+            <a href="#" class="btn btn-secondary" data-i18n="hero.bookDemo">Book Demo</a>
+        </div>
+    </section>
+
+    <!-- Database Scanner Demo -->
+    <section class="demo-section" id="scanner">
+        <div class="demo-row">
+            <div class="demo-content">
+                <h2 data-i18n="scanner.title">Scan 50,000+ patients in 60 seconds</h2>
+                <p data-i18n="scanner.description">
+                    Our AI instantly analyzes your entire patient database against complex trial criteria. No more manual chart reviews.
+                </p>
+                <ul class="feature-list">
+                    <li class="feature-item">
+                        <span class="check-icon"></span>
+                        <span data-i18n="scanner.feature1">Works with Epic, Cerner, Salesforce, any EMR</span>
+                    </li>
+                    <li class="feature-item">
+                        <span class="check-icon"></span>
+                        <span data-i18n="scanner.feature2">99% accuracy in patient matching</span>
+                    </li>
+                    <li class="feature-item">
+                        <span class="check-icon"></span>
+                        <span data-i18n="scanner.feature3">HIPAA compliant and secure</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="mockup-window">
+                <div class="window-header">
+                    <div class="window-dots">
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                    </div>
+                    <span class="window-title">Database Scanner</span>
+                </div>
+                <div class="window-content">
+                    <div class="scanner-animation">
+                        <div class="scan-beam"></div>
+                        <div class="patient-row">
+                            <div class="patient-info">
+                                <div class="patient-avatar">JD</div>
+                                <div class="patient-details">
+                                    <div class="patient-name">John Davis</div>
+                                    <div class="patient-meta">52 yrs • Type 2 Diabetes • 3 years</div>
+                                </div>
+                            </div>
+                            <span class="match-indicator">95% Match</span>
+                        </div>
+                        <div class="patient-row">
+                            <div class="patient-info">
+                                <div class="patient-avatar">SM</div>
+                                <div class="patient-details">
+                                    <div class="patient-name">Sarah Miller</div>
+                                    <div class="patient-meta">45 yrs • Pre-diabetic • 1 year</div>
+                                </div>
+                            </div>
+                            <span class="match-indicator">88% Match</span>
+                        </div>
+                        <div class="patient-row">
+                            <div class="patient-info">
+                                <div class="patient-avatar">RC</div>
+                                <div class="patient-details">
+                                    <div class="patient-name">Robert Chen</div>
+                                    <div class="patient-meta">61 yrs • Type 2 Diabetes • 5 years</div>
+                                </div>
+                            </div>
+                            <span class="match-indicator">92% Match</span>
+                        </div>
+                        <div class="patient-row">
+                            <div class="patient-info">
+                                <div class="patient-avatar">EJ</div>
+                                <div class="patient-details">
+                                    <div class="patient-name">Emily Johnson</div>
+                                    <div class="patient-meta">38 yrs • Gestational Diabetes • 6 mo</div>
+                                </div>
+                            </div>
+                            <span class="match-indicator">76% Match</span>
+                        </div>
+                        <div class="patient-row">
+                            <div class="patient-info">
+                                <div class="patient-avatar">MB</div>
+                                <div class="patient-details">
+                                    <div class="patient-name">Michael Brown</div>
+                                    <div class="patient-meta">55 yrs • Type 2 Diabetes • 2 years</div>
+                                </div>
+                            </div>
+                            <span class="match-indicator">89% Match</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Voice AI Demo -->
+    <section class="demo-section" id="voice">
+        <div class="demo-row reverse">
+            <div class="demo-content">
+                <h2 data-i18n="voice.title">Natural voice conversations that convert</h2>
+                <p data-i18n="voice.description">
+                    Our AI conducts warm, empathetic screening calls that build trust. Available 24/7 in 50+ languages.
+                </p>
+                <ul class="feature-list">
+                    <li class="feature-item">
+                        <span class="check-icon"></span>
+                        <span data-i18n="voice.feature1">Human-like conversations, not robotic scripts</span>
+                    </li>
+                    <li class="feature-item">
+                        <span class="check-icon"></span>
+                        <span data-i18n="voice.feature2">Answers questions and handles objections</span>
+                    </li>
+                    <li class="feature-item">
+                        <span class="check-icon"></span>
+                        <span data-i18n="voice.feature3">92% patient satisfaction rate</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="mockup-window">
+                <div class="window-header">
+                    <div class="window-dots">
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                    </div>
+                    <span class="window-title">Voice AI Demo</span>
+                </div>
+                <div class="window-content">
+                    <!-- Interactive Demo Controls -->
+                    <div class="demo-controls">
+                        <div class="demo-buttons">
+                            <button id="playBtn" class="demo-btn demo-btn-primary">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                </svg>
+                                Play Demo
+                            </button>
+                            <button id="resetBtn" class="demo-btn demo-btn-outline" style="display: none;">
+                                Reset
+                            </button>
+                            <button id="audioBtn" class="demo-btn demo-btn-outline">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                                </svg>
+                                AI Audio Off
+                            </button>
+                        </div>
+                        <div class="demo-status">
+                            <span class="status-dot" id="statusDot"></span>
+                            <span id="statusText">Demo Ready</span>
+                        </div>
+                    </div>
+
+                    <!-- Conversation Container -->
+                    <div class="conversation-container" id="conversationContainer">
+                        <div class="demo-placeholder">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                <line x1="12" y1="19" x2="12" y2="23"></line>
+                                <line x1="8" y1="23" x2="16" y2="23"></line>
+                            </svg>
+                            <p>Click "Play Demo" to see a sample screening conversation</p>
+                            <p style="font-size: 0.813rem; margin-top: 0.5rem;">Enable "AI Audio" to hear realistic AI-generated voices</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dashboard Demo -->
+    <section class="demo-section" id="dashboard">
+        <div class="demo-row">
+            <div class="demo-content">
+                <h2 data-i18n="dashboard.title">Real-time insights at your fingertips</h2>
+                <p data-i18n="dashboard.description">
+                    Track every metric from screening to enrollment. Know exactly what's working and optimize in real-time.
+                </p>
+                <ul class="feature-list">
+                    <li class="feature-item">
+                        <span class="check-icon"></span>
+                        <span data-i18n="dashboard.feature1">Live recruitment metrics and conversion rates</span>
+                    </li>
+                    <li class="feature-item">
+                        <span class="check-icon"></span>
+                        <span data-i18n="dashboard.feature2">Patient journey tracking from start to finish</span>
+                    </li>
+                    <li class="feature-item">
+                        <span class="check-icon"></span>
+                        <span data-i18n="dashboard.feature3">Automated reporting for sponsors</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="mockup-window">
+                <div class="window-header">
+                    <div class="window-dots">
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                    </div>
+                    <span class="window-title">Analytics Dashboard</span>
+                </div>
+                <div class="window-content">
+                    <div class="dashboard-grid">
+                        <div class="metric-card">
+                            <div class="metric-label">Patients Screened</div>
+                            <div class="metric-value">847</div>
+                            <div class="metric-change">↑ 24% this week</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Enrolled</div>
+                            <div class="metric-value">124</div>
+                            <div class="metric-change">↑ 18% this week</div>
+                        </div>
+                        <div class="chart-container">
+                            <div class="metric-label">Weekly Enrollment Trend</div>
+                            <div class="chart-bars">
+                                <div class="chart-bar"></div>
+                                <div class="chart-bar"></div>
+                                <div class="chart-bar"></div>
+                                <div class="chart-bar"></div>
+                                <div class="chart-bar"></div>
+                                <div class="chart-bar"></div>
+                                <div class="chart-bar"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Test Voice AI Section -->
+    <section class="stats-section">
+        <div class="cta-container" style="max-width: 800px;">
+            <h2 style="font-size: 2.5rem; font-weight: 700; margin-bottom: 1rem; text-align: center;" data-i18n="testVoiceAI.title">Test our voice AI</h2>
+            <p style="font-size: 1.125rem; color: var(--text-light); margin-bottom: 2rem; text-align: center;" data-i18n="testVoiceAI.subtitle">Get matched with a diabetes study</p>
+
+            <!-- Challenge Board -->
+            <div style="background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%); border-radius: 12px; padding: 2rem; margin-bottom: 2rem;">
+                <h3 style="font-size: 1.5rem; font-weight: 700; color: white; margin-bottom: 1rem; text-align: center;" data-i18n="testVoiceAI.challengeTitle">"Try to Break Our AI" Challenge</h3>
+                <p style="color: rgba(255, 255, 255, 0.9); text-align: center; margin-bottom: 1.5rem; font-size: 0.938rem;" data-i18n="testVoiceAI.challengeSubtitle">See if you can stump our AI. Try these challenges during your call:</p>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <div style="background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); border-radius: 8px; padding: 1rem; border: 1px solid rgba(255, 255, 255, 0.2);">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                            <span style="color: white; font-weight: 600; font-size: 0.875rem;">Challenge 1</span>
+                        </div>
+                        <p style="color: rgba(255, 255, 255, 0.95); font-size: 0.875rem; line-height: 1.4;" data-i18n="testVoiceAI.challenge1">Interrupt mid-sentence</p>
+                    </div>
+
+                    <div style="background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); border-radius: 8px; padding: 1rem; border: 1px solid rgba(255, 255, 255, 0.2);">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                            <span style="color: white; font-weight: 600; font-size: 0.875rem;">Challenge 2</span>
+                        </div>
+                        <p style="color: rgba(255, 255, 255, 0.95); font-size: 0.875rem; line-height: 1.4;" data-i18n="testVoiceAI.challenge2">Ask about side effects 3 times</p>
+                    </div>
+
+                    <div style="background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); border-radius: 8px; padding: 1rem; border: 1px solid rgba(255, 255, 255, 0.2);">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                            <span style="color: white; font-weight: 600; font-size: 0.875rem;">Challenge 3</span>
+                        </div>
+                        <p style="color: rgba(255, 255, 255, 0.95); font-size: 0.875rem; line-height: 1.4;" data-i18n="testVoiceAI.challenge3">Pretend you don't understand English well</p>
+                    </div>
+
+                    <div style="background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); border-radius: 8px; padding: 1rem; border: 1px solid rgba(255, 255, 255, 0.2);">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                            <span style="color: white; font-weight: 600; font-size: 0.875rem;">Challenge 4</span>
+                        </div>
+                        <p style="color: rgba(255, 255, 255, 0.95); font-size: 0.875rem; line-height: 1.4;" data-i18n="testVoiceAI.challenge4">Change your mind about availability</p>
+                    </div>
+
+                    <div style="background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); border-radius: 8px; padding: 1rem; border: 1px solid rgba(255, 255, 255, 0.2);">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                            <span style="color: white; font-weight: 600; font-size: 0.875rem;">Challenge 5</span>
+                        </div>
+                        <p style="color: rgba(255, 255, 255, 0.95); font-size: 0.875rem; line-height: 1.4;" data-i18n="testVoiceAI.challenge5">Act confused about the trial purpose</p>
+                    </div>
+                </div>
+            </div>
+
+            <div style="text-align: center;">
+                <button id="startCallBtn" class="btn btn-primary" style="font-size: 1rem; padding: 1rem 2rem;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem; display: inline-block; vertical-align: middle;">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                    </svg>
+                    <span data-i18n="testVoiceAI.startCall">Start Call</span>
+                </button>
+            </div>
+
+            <!-- Call Form Modal -->
+            <div id="callFormModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 2000; align-items: center; justify-content: center;">
+                <div style="background: white; border-radius: 12px; padding: 2rem; max-width: 500px; width: 90%; margin: 2rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h3 style="font-size: 1.5rem; font-weight: 700;" data-i18n="callForm.title">Start AI Call</h3>
+                        <button id="closeModalBtn" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-light);">&times;</button>
+                    </div>
+
+                    <form id="callForm" style="display: flex; flex-direction: column; gap: 1rem;">
+                        <div>
+                            <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem;" data-i18n="callForm.phoneLabel">Phone Number *</label>
+                            <input type="tel" id="phoneNumber" required data-i18n-placeholder="callForm.phonePlaceholder" placeholder="+1234567890" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.938rem;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem;" data-i18n="callForm.ageLabel">Age *</label>
+                            <input type="number" id="age" required data-i18n-placeholder="callForm.agePlaceholder" placeholder="45" min="18" max="120" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.938rem;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem;" data-i18n="callForm.genderLabel">Gender *</label>
+                            <select id="gender" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.938rem;">
+                                <option value="" data-i18n="callForm.genderPlaceholder">Select gender</option>
+                                <option value="male" data-i18n="callForm.genderMale">Male</option>
+                                <option value="female" data-i18n="callForm.genderFemale">Female</option>
+                                <option value="other" data-i18n="callForm.genderOther">Other</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem;" data-i18n="callForm.locationLabel">Location</label>
+                            <input type="text" id="location" data-i18n-placeholder="callForm.locationPlaceholder" placeholder="City, State" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.938rem;">
+                        </div>
+
+                        <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
+                            <button type="button" id="cancelBtn" style="flex: 1; padding: 0.75rem; border: 1px solid var(--border); background: white; border-radius: 6px; font-weight: 500; cursor: pointer;" data-i18n="callForm.cancel">Cancel</button>
+                            <button type="submit" id="initiateCallBtn" style="flex: 1; padding: 0.75rem; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 500; cursor: pointer;" data-i18n="callForm.initiate">Initiate Call</button>
+                        </div>
+
+                        <div id="callStatus" style="display: none; padding: 1rem; border-radius: 6px; text-align: center; font-size: 0.875rem;"></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section">
+        <div class="cta-container">
+            <h2 class="cta-title" data-i18n="cta.title">Start finding patients today</h2>
+            <form class="email-form" onsubmit="handleSubmit(event)">
+                <input type="email" class="email-input" data-i18n-placeholder="cta.emailPlaceholder" placeholder="Work email" required>
+                <button type="submit" class="btn-submit" data-i18n="cta.getStarted">Get Started</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-links">
+            <a href="#" class="footer-link" data-i18n="footer.privacy">Privacy</a>
+            <a href="#" class="footer-link" data-i18n="footer.terms">Terms</a>
+            <a href="#" class="footer-link" data-i18n="footer.documentation">Documentation</a>
+            <a href="#" class="footer-link" data-i18n="footer.contact">Contact</a>
+        </div>
+        <p style="color: var(--text-light); font-size: 0.875rem;" data-i18n="footer.copyright">© 2025 Nurodot</p>
+    </footer>
+
+    <script>
+        // Translation data
+        const translations = {
+            en: {
+                nav: {
+                    scanner: "Database Scanner",
+                    voice: "Voice AI",
+                    dashboard: "Dashboard",
+                    login: "Login",
+                    bookDemo: "Book Demo"
+                },
+                hero: {
+                    title: "Find trial patients in seconds,<br>not months",
+                    subtitle: "AI that scans your database, identifies eligible patients, and enrolls them through natural voice conversations.",
+                    seeHow: "See How It Works",
+                    bookDemo: "Book Demo"
+                },
+                scanner: {
+                    title: "Scan 50,000+ patients in 60 seconds",
+                    description: "Our AI instantly analyzes your entire patient database against complex trial criteria. No more manual chart reviews.",
+                    feature1: "Works with Epic, Cerner, Salesforce, any EMR",
+                    feature2: "99% accuracy in patient matching",
+                    feature3: "HIPAA compliant and secure"
+                },
+                voice: {
+                    title: "Natural voice conversations that convert",
+                    description: "Our AI conducts warm, empathetic screening calls that build trust. Available 24/7 in 50+ languages.",
+                    feature1: "Human-like conversations, not robotic scripts",
+                    feature2: "Answers questions and handles objections",
+                    feature3: "92% patient satisfaction rate"
+                },
+                dashboard: {
+                    title: "Real-time insights at your fingertips",
+                    description: "Track every metric from screening to enrollment. Know exactly what's working and optimize in real-time.",
+                    feature1: "Live recruitment metrics and conversion rates",
+                    feature2: "Patient journey tracking from start to finish",
+                    feature3: "Automated reporting for sponsors"
+                },
+                demo: {
+                    playDemo: "Play Demo",
+                    pauseDemo: "Pause Demo",
+                    reset: "Reset",
+                    audioOn: "AI Audio On",
+                    audioOff: "AI Audio Off",
+                    loading: "Loading...",
+                    demoReady: "Demo Ready",
+                    liveDemo: "Live Demo",
+                    demoPaused: "Demo Paused",
+                    demoComplete: "Demo Complete",
+                    placeholderTitle: "Click \"Play Demo\" to see a sample screening conversation",
+                    placeholderSubtitle: "Enable \"AI Audio\" to hear realistic AI-generated voices"
+                },
+                testVoiceAI: {
+                    title: "Test our voice AI",
+                    subtitle: "Get matched with a diabetes study",
+                    challengeTitle: "\"Try to Break Our AI\" Challenge",
+                    challengeSubtitle: "See if you can stump our AI. Try these challenges during your call:",
+                    challenge1: "Interrupt mid-sentence",
+                    challenge2: "Ask about side effects 3 times",
+                    challenge3: "Pretend you don't understand English well",
+                    challenge4: "Change your mind about availability",
+                    challenge5: "Act confused about the trial purpose",
+                    startCall: "Start Call"
+                },
+                callForm: {
+                    title: "Start AI Call",
+                    phoneLabel: "Phone Number *",
+                    phonePlaceholder: "+1234567890",
+                    ageLabel: "Age *",
+                    agePlaceholder: "45",
+                    genderLabel: "Gender *",
+                    genderPlaceholder: "Select gender",
+                    genderMale: "Male",
+                    genderFemale: "Female",
+                    genderOther: "Other",
+                    locationLabel: "Location",
+                    locationPlaceholder: "City, State",
+                    languageLabel: "Call Language *",
+                    cancel: "Cancel",
+                    initiate: "Initiate Call",
+                    initiating: "Initiating Call...",
+                    statusInitiating: "Initiating call...",
+                    statusSuccess: "✓ Call initiated successfully! You will receive a call shortly.",
+                    statusError: "✗ Failed to initiate call: "
+                },
+                cta: {
+                    title: "Start finding patients today",
+                    emailPlaceholder: "Work email",
+                    getStarted: "Get Started",
+                    thankYou: "Thank you!"
+                },
+                footer: {
+                    privacy: "Privacy",
+                    terms: "Terms",
+                    documentation: "Documentation",
+                    contact: "Contact",
+                    copyright: "© 2025 Nurodot"
+                }
+            },
+            es: {
+                nav: {
+                    scanner: "Escáner de Base de Datos",
+                    voice: "IA de Voz",
+                    dashboard: "Panel de Control",
+                    login: "Iniciar Sesión",
+                    bookDemo: "Reservar Demo"
+                },
+                hero: {
+                    title: "Encuentra pacientes para ensayos en segundos,<br>no en meses",
+                    subtitle: "IA que escanea tu base de datos, identifica pacientes elegibles y los inscribe a través de conversaciones de voz naturales.",
+                    seeHow: "Ver Cómo Funciona",
+                    bookDemo: "Reservar Demo"
+                },
+                scanner: {
+                    title: "Escanea 50,000+ pacientes en 60 segundos",
+                    description: "Nuestra IA analiza instantáneamente toda tu base de datos de pacientes contra criterios de ensayo complejos. No más revisiones manuales de historiales.",
+                    feature1: "Funciona con Epic, Cerner, Salesforce, cualquier EMR",
+                    feature2: "99% de precisión en la coincidencia de pacientes",
+                    feature3: "Cumple con HIPAA y es seguro"
+                },
+                voice: {
+                    title: "Conversaciones de voz naturales que convierten",
+                    description: "Nuestra IA realiza llamadas de selección cálidas y empáticas que generan confianza. Disponible 24/7 en más de 50 idiomas.",
+                    feature1: "Conversaciones similares a humanos, no guiones robóticos",
+                    feature2: "Responde preguntas y maneja objeciones",
+                    feature3: "92% de tasa de satisfacción del paciente"
+                },
+                dashboard: {
+                    title: "Información en tiempo real al alcance de tu mano",
+                    description: "Rastrea cada métrica desde la selección hasta la inscripción. Sabe exactamente qué está funcionando y optimiza en tiempo real.",
+                    feature1: "Métricas de reclutamiento en vivo y tasas de conversión",
+                    feature2: "Seguimiento del viaje del paciente de principio a fin",
+                    feature3: "Informes automatizados para patrocinadores"
+                },
+                demo: {
+                    playDemo: "Reproducir Demo",
+                    pauseDemo: "Pausar Demo",
+                    reset: "Reiniciar",
+                    audioOn: "Audio IA Activado",
+                    audioOff: "Audio IA Desactivado",
+                    loading: "Cargando...",
+                    demoReady: "Demo Lista",
+                    liveDemo: "Demo en Vivo",
+                    demoPaused: "Demo Pausada",
+                    demoComplete: "Demo Completa",
+                    placeholderTitle: "Haz clic en \"Reproducir Demo\" para ver una conversación de selección de muestra",
+                    placeholderSubtitle: "Activa \"Audio IA\" para escuchar voces realistas generadas por IA"
+                },
+                testVoiceAI: {
+                    title: "Prueba nuestra IA de voz",
+                    subtitle: "Encuentra un estudio de diabetes para ti",
+                    challengeTitle: "Desafío \"Intenta Romper Nuestra IA\"",
+                    challengeSubtitle: "Ve si puedes confundir a nuestra IA. Prueba estos desafíos durante tu llamada:",
+                    challenge1: "Interrumpe a mitad de frase",
+                    challenge2: "Pregunta sobre efectos secundarios 3 veces",
+                    challenge3: "Finge que no entiendes bien el inglés",
+                    challenge4: "Cambia de opinión sobre disponibilidad",
+                    challenge5: "Actúa confundido sobre el propósito del ensayo",
+                    startCall: "Iniciar Llamada"
+                },
+                callForm: {
+                    title: "Iniciar Llamada IA",
+                    phoneLabel: "Número de Teléfono *",
+                    phonePlaceholder: "+34123456789",
+                    ageLabel: "Edad *",
+                    agePlaceholder: "45",
+                    genderLabel: "Género *",
+                    genderPlaceholder: "Selecciona género",
+                    genderMale: "Masculino",
+                    genderFemale: "Femenino",
+                    genderOther: "Otro",
+                    locationLabel: "Ubicación",
+                    locationPlaceholder: "Ciudad, Estado",
+                    languageLabel: "Idioma de la Llamada *",
+                    cancel: "Cancelar",
+                    initiate: "Iniciar Llamada",
+                    initiating: "Iniciando Llamada...",
+                    statusInitiating: "Iniciando llamada...",
+                    statusSuccess: "✓ ¡Llamada iniciada con éxito! Recibirás una llamada en breve.",
+                    statusError: "✗ Error al iniciar llamada: "
+                },
+                cta: {
+                    title: "Comienza a encontrar pacientes hoy",
+                    emailPlaceholder: "Correo de trabajo",
+                    getStarted: "Comenzar",
+                    thankYou: "¡Gracias!"
+                },
+                footer: {
+                    privacy: "Privacidad",
+                    terms: "Términos",
+                    documentation: "Documentación",
+                    contact: "Contacto",
+                    copyright: "© 2025 Nurodot"
+                }
+            },
+            fr: {
+                nav: {
+                    scanner: "Scanner de Base de Données",
+                    voice: "IA Vocale",
+                    dashboard: "Tableau de Bord",
+                    bookDemo: "Réserver une Démo",
+                    login: "Connexion"
+                },
+                hero: {
+                    title: "Trouvez des patients pour essais en quelques secondes,<br>pas en mois",
+                    subtitle: "IA qui scanne votre base de données, identifie les patients éligibles et les inscrit par des conversations vocales naturelles.",
+                    seeHow: "Voir Comment Ça Marche",
+                    bookDemo: "Réserver une Démo"
+                },
+                scanner: {
+                    title: "Scannez 50 000+ patients en 60 secondes",
+                    description: "Notre IA analyse instantanément toute votre base de données de patients par rapport à des critères d'essai complexes. Finis les examens manuels.",
+                    feature1: "Fonctionne avec Epic, Cerner, Salesforce, tout EMR",
+                    feature2: "99% de précision dans l'appariement des patients",
+                    feature3: "Conforme HIPAA et sécurisé"
+                },
+                voice: {
+                    title: "Conversations vocales naturelles qui convertissent",
+                    description: "Notre IA mène des appels de sélection chaleureux et empathiques qui créent la confiance. Disponible 24h/24 et 7j/7 en plus de 50 langues.",
+                    feature1: "Conversations humaines, pas de scripts robotiques",
+                    feature2: "Répond aux questions et gère les objections",
+                    feature3: "92% de taux de satisfaction des patients"
+                },
+                dashboard: {
+                    title: "Informations en temps réel à portée de main",
+                    description: "Suivez chaque métrique du dépistage à l'inscription. Sachez exactement ce qui fonctionne et optimisez en temps réel.",
+                    feature1: "Métriques de recrutement en direct et taux de conversion",
+                    feature2: "Suivi du parcours patient du début à la fin",
+                    feature3: "Rapports automatisés pour les sponsors"
+                },
+                demo: {
+                    playDemo: "Lire la Démo",
+                    pauseDemo: "Mettre en Pause",
+                    reset: "Réinitialiser",
+                    audioOn: "Audio IA Activé",
+                    audioOff: "Audio IA Désactivé",
+                    loading: "Chargement...",
+                    demoReady: "Démo Prête",
+                    liveDemo: "Démo en Direct",
+                    demoPaused: "Démo en Pause",
+                    demoComplete: "Démo Terminée",
+                    placeholderTitle: "Cliquez sur \"Lire la Démo\" pour voir une conversation de sélection exemple",
+                    placeholderSubtitle: "Activez \"Audio IA\" pour entendre des voix réalistes générées par IA"
+                },
+                testVoiceAI: {
+                    title: "Testez notre IA vocale",
+                    subtitle: "Trouvez une étude sur le diabète pour vous",
+                    challengeTitle: "Défi \"Essayez de Casser Notre IA\"",
+                    challengeSubtitle: "Voyez si vous pouvez piéger notre IA. Essayez ces défis pendant votre appel:",
+                    challenge1: "Interrompez en milieu de phrase",
+                    challenge2: "Demandez les effets secondaires 3 fois",
+                    challenge3: "Faites semblant de ne pas bien comprendre l'anglais",
+                    challenge4: "Changez d'avis sur la disponibilité",
+                    challenge5: "Agissez confus sur le but de l'essai",
+                    startCall: "Démarrer l'Appel"
+                },
+                callForm: {
+                    title: "Démarrer l'Appel IA",
+                    phoneLabel: "Numéro de Téléphone *",
+                    phonePlaceholder: "+33123456789",
+                    ageLabel: "Âge *",
+                    agePlaceholder: "45",
+                    genderLabel: "Genre *",
+                    genderPlaceholder: "Sélectionnez le genre",
+                    genderMale: "Homme",
+                    genderFemale: "Femme",
+                    genderOther: "Autre",
+                    locationLabel: "Localisation",
+                    locationPlaceholder: "Ville, État",
+                    languageLabel: "Langue de l'Appel *",
+                    cancel: "Annuler",
+                    initiate: "Lancer l'Appel",
+                    initiating: "Lancement de l'Appel...",
+                    statusInitiating: "Lancement de l'appel...",
+                    statusSuccess: "✓ Appel lancé avec succès! Vous recevrez un appel sous peu.",
+                    statusError: "✗ Échec du lancement de l'appel: "
+                },
+                cta: {
+                    title: "Commencez à trouver des patients aujourd'hui",
+                    emailPlaceholder: "Email professionnel",
+                    getStarted: "Commencer",
+                    thankYou: "Merci!"
+                },
+                footer: {
+                    privacy: "Confidentialité",
+                    terms: "Conditions",
+                    documentation: "Documentation",
+                    contact: "Contact",
+                    copyright: "© 2025 Nurodot"
+                }
+            },
+            de: {
+                nav: {
+                    scanner: "Datenbank-Scanner",
+                    voice: "Sprach-KI",
+                    dashboard: "Dashboard",
+                    bookDemo: "Demo Buchen",
+                    login: "Anmelden"
+                },
+                hero: {
+                    title: "Finden Sie Studienpatienten in Sekunden,<br>nicht in Monaten",
+                    subtitle: "KI, die Ihre Datenbank scannt, geeignete Patienten identifiziert und sie durch natürliche Sprachgespräche einschreibt.",
+                    seeHow: "So Funktioniert's",
+                    bookDemo: "Demo Buchen"
+                },
+                scanner: {
+                    title: "Scannen Sie 50.000+ Patienten in 60 Sekunden",
+                    description: "Unsere KI analysiert sofort Ihre gesamte Patientendatenbank anhand komplexer Studienkriterien. Keine manuellen Diagrammüberprüfungen mehr.",
+                    feature1: "Funktioniert mit Epic, Cerner, Salesforce, jedem EMR",
+                    feature2: "99% Genauigkeit bei der Patientenübereinstimmung",
+                    feature3: "HIPAA-konform und sicher"
+                },
+                voice: {
+                    title: "Natürliche Sprachgespräche, die konvertieren",
+                    description: "Unsere KI führt warme, empathische Screening-Anrufe durch, die Vertrauen aufbauen. Verfügbar 24/7 in über 50 Sprachen.",
+                    feature1: "Menschenähnliche Gespräche, keine roboterhaften Skripte",
+                    feature2: "Beantwortet Fragen und behandelt Einwände",
+                    feature3: "92% Patientenzufriedenheitsrate"
+                },
+                dashboard: {
+                    title: "Echtzeit-Einblicke auf Knopfdruck",
+                    description: "Verfolgen Sie jede Metrik vom Screening bis zur Einschreibung. Wissen Sie genau, was funktioniert, und optimieren Sie in Echtzeit.",
+                    feature1: "Live-Rekrutierungsmetriken und Conversion-Raten",
+                    feature2: "Verfolgung der Patientenreise von Anfang bis Ende",
+                    feature3: "Automatisierte Berichterstattung für Sponsoren"
+                },
+                demo: {
+                    playDemo: "Demo Abspielen",
+                    pauseDemo: "Demo Pausieren",
+                    reset: "Zurücksetzen",
+                    audioOn: "KI-Audio Ein",
+                    audioOff: "KI-Audio Aus",
+                    loading: "Lädt...",
+                    demoReady: "Demo Bereit",
+                    liveDemo: "Live-Demo",
+                    demoPaused: "Demo Pausiert",
+                    demoComplete: "Demo Abgeschlossen",
+                    placeholderTitle: "Klicken Sie auf \"Demo Abspielen\", um ein Beispiel-Screening-Gespräch zu sehen",
+                    placeholderSubtitle: "Aktivieren Sie \"KI-Audio\", um realistische KI-generierte Stimmen zu hören"
+                },
+                testVoiceAI: {
+                    title: "Testen Sie unsere Sprach-KI",
+                    subtitle: "Finden Sie eine Diabetes-Studie für sich",
+                    challengeTitle: "\"Versuchen Sie, unsere KI zu brechen\" Herausforderung",
+                    challengeSubtitle: "Sehen Sie, ob Sie unsere KI verwirren können. Probieren Sie diese Herausforderungen während Ihres Anrufs:",
+                    challenge1: "Unterbrechen Sie mitten im Satz",
+                    challenge2: "Fragen Sie 3 Mal nach Nebenwirkungen",
+                    challenge3: "Tun Sie so, als ob Sie Englisch nicht gut verstehen",
+                    challenge4: "Ändern Sie Ihre Meinung zur Verfügbarkeit",
+                    challenge5: "Verhalten Sie sich verwirrt über den Studienzweck",
+                    startCall: "Anruf Starten"
+                },
+                callForm: {
+                    title: "KI-Anruf Starten",
+                    phoneLabel: "Telefonnummer *",
+                    phonePlaceholder: "+49123456789",
+                    ageLabel: "Alter *",
+                    agePlaceholder: "45",
+                    genderLabel: "Geschlecht *",
+                    genderPlaceholder: "Geschlecht wählen",
+                    genderMale: "Männlich",
+                    genderFemale: "Weiblich",
+                    genderOther: "Andere",
+                    locationLabel: "Standort",
+                    locationPlaceholder: "Stadt, Bundesland",
+                    languageLabel: "Anrufsprache *",
+                    cancel: "Abbrechen",
+                    initiate: "Anruf Starten",
+                    initiating: "Starte Anruf...",
+                    statusInitiating: "Starte Anruf...",
+                    statusSuccess: "✓ Anruf erfolgreich gestartet! Sie erhalten in Kürze einen Anruf.",
+                    statusError: "✗ Anruf konnte nicht gestartet werden: "
+                },
+                cta: {
+                    title: "Finden Sie heute Patienten",
+                    emailPlaceholder: "Geschäfts-E-Mail",
+                    getStarted: "Loslegen",
+                    thankYou: "Danke!"
+                },
+                footer: {
+                    privacy: "Datenschutz",
+                    terms: "Bedingungen",
+                    documentation: "Dokumentation",
+                    contact: "Kontakt",
+                    copyright: "© 2025 Nurodot"
+                }
+            },
+            zh: {
+                nav: {
+                    scanner: "数据库扫描器",
+                    voice: "语音AI",
+                    dashboard: "仪表板",
+                    bookDemo: "预约演示",
+                    login: "登录"
+                },
+                hero: {
+                    title: "在几秒钟内找到试验患者，<br>而不是几个月",
+                    subtitle: "AI扫描您的数据库，识别符合条件的患者，并通过自然语音对话进行注册。",
+                    seeHow: "查看工作原理",
+                    bookDemo: "预约演示"
+                },
+                scanner: {
+                    title: "在60秒内扫描50,000+患者",
+                    description: "我们的AI立即根据复杂的试验标准分析您的整个患者数据库。不再需要手动图表审查。",
+                    feature1: "适用于Epic、Cerner、Salesforce，任何EMR",
+                    feature2: "患者匹配准确率99%",
+                    feature3: "符合HIPAA并且安全"
+                },
+                voice: {
+                    title: "转化的自然语音对话",
+                    description: "我们的AI进行温暖、富有同理心的筛选呼叫，建立信任。24/7提供50多种语言。",
+                    feature1: "类人对话，而不是机器人脚本",
+                    feature2: "回答问题并处理异议",
+                    feature3: "92%患者满意率"
+                },
+                dashboard: {
+                    title: "实时洞察触手可及",
+                    description: "跟踪从筛选到注册的每个指标。准确知道什么有效并实时优化。",
+                    feature1: "实时招募指标和转化率",
+                    feature2: "从头到尾跟踪患者旅程",
+                    feature3: "为赞助商自动报告"
+                },
+                demo: {
+                    playDemo: "播放演示",
+                    pauseDemo: "暂停演示",
+                    reset: "重置",
+                    audioOn: "AI音频开",
+                    audioOff: "AI音频关",
+                    loading: "加载中...",
+                    demoReady: "演示就绪",
+                    liveDemo: "实时演示",
+                    demoPaused: "演示已暂停",
+                    demoComplete: "演示完成",
+                    placeholderTitle: "点击\"播放演示\"查看示例筛选对话",
+                    placeholderSubtitle: "启用\"AI音频\"以听取AI生成的逼真声音"
+                },
+                testVoiceAI: {
+                    title: "测试我们的语音AI",
+                    subtitle: "为您匹配糖尿病研究",
+                    challengeTitle: "\"试图打破我们的AI\"挑战",
+                    challengeSubtitle: "看看您是否能难倒我们的AI。在通话期间尝试这些挑战：",
+                    challenge1: "在句子中间打断",
+                    challenge2: "询问副作用3次",
+                    challenge3: "假装您不太懂英语",
+                    challenge4: "改变您对可用性的想法",
+                    challenge5: "对试验目的表现出困惑",
+                    startCall: "开始通话"
+                },
+                callForm: {
+                    title: "开始AI通话",
+                    phoneLabel: "电话号码 *",
+                    phonePlaceholder: "+861234567890",
+                    ageLabel: "年龄 *",
+                    agePlaceholder: "45",
+                    genderLabel: "性别 *",
+                    genderPlaceholder: "选择性别",
+                    genderMale: "男性",
+                    genderFemale: "女性",
+                    genderOther: "其他",
+                    locationLabel: "位置",
+                    locationPlaceholder: "城市，州",
+                    languageLabel: "通话语言 *",
+                    cancel: "取消",
+                    initiate: "发起通话",
+                    initiating: "正在发起通话...",
+                    statusInitiating: "正在发起通话...",
+                    statusSuccess: "✓ 通话成功发起！您将很快收到电话。",
+                    statusError: "✗ 发起通话失败："
+                },
+                cta: {
+                    title: "今天开始寻找患者",
+                    emailPlaceholder: "工作邮箱",
+                    getStarted: "开始使用",
+                    thankYou: "谢谢！"
+                },
+                footer: {
+                    privacy: "隐私",
+                    terms: "条款",
+                    documentation: "文档",
+                    contact: "联系",
+                    copyright: "© 2025 Nurodot"
+                }
+            }
+        };
+
+        // Current language
+        let currentLanguage = 'en';
+
+        // Conversation data
+        const conversationSteps = [
+            {
+                speaker: "AI",
+                message: "Hi there! Thanks for your interest in our diabetes study. I'm here to chat with you about whether this might be a good fit. How are you doing today?",
+                timestamp: "0:00"
+            },
+            {
+                speaker: "Patient",
+                message: "I'm doing well, thank you! I'm curious about this study.",
+                timestamp: "0:04"
+            },
+            {
+                speaker: "AI",
+                message: "That's great to hear! So I can get to know you better, would you mind sharing your age with me?",
+                timestamp: "0:07"
+            },
+            {
+                speaker: "Patient",
+                message: "Sure, I'm 45 years old.",
+                timestamp: "0:11"
+            },
+            {
+                speaker: "AI",
+                message: "Perfect! And I see you're interested in our diabetes research. Have you been diagnosed with Type 2 diabetes?",
+                timestamp: "0:13"
+            },
+            {
+                speaker: "Patient",
+                message: "Yes, I was diagnosed about 3 years ago.",
+                timestamp: "0:17"
+            },
+            {
+                speaker: "AI",
+                message: "Great. Before we dive into some questions, do you have any initial questions about the study, like what it involves or compensation?",
+                timestamp: "0:20"
+            },
+            {
+                speaker: "Patient",
+                message: "Actually, yes! What's the compensation like?",
+                timestamp: "0:24"
+            },
+            {
+                speaker: "AI",
+                message: "Of course. For this study, you'll be compensated up to $300 per in-person visit, $50 per telephone call, and reimbursed for travel. The study lasts about 18 months with at least 10-12 in-person visits and several phone check-ins. Let me know if you have more questions about that.",
+                timestamp: "0:27"
+            },
+            {
+                speaker: "Patient",
+                message: "That sounds great, thank you! I'm interested in learning more.",
+                timestamp: "0:35"
+            },
+            {
+                speaker: "AI",
+                message: "Wonderful! Based on what you've shared, you seem like you could be a great candidate for our study. I'd love to connect you with our research coordinator who can tell you more about the next steps. Does that sound good?",
+                timestamp: "0:38"
+            }
+        ];
+
+        // State
+        let isPlaying = false;
+        let currentStep = 0;
+        let isAudioEnabled = false;
+        let isAudioPlaying = false;
+        let playInterval = null;
+        let audioElement = new Audio();
+
+        // Elements
+        const playBtn = document.getElementById('playBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const audioBtn = document.getElementById('audioBtn');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const conversationContainer = document.getElementById('conversationContainer');
+
+        // Play/Pause handler
+        playBtn.addEventListener('click', () => {
+            if (!isPlaying) {
+                startDemo();
+            } else {
+                pauseDemo();
+            }
+        });
+
+        // Reset handler
+        resetBtn.addEventListener('click', () => {
+            resetDemo();
+        });
+
+        // Audio toggle handler
+        audioBtn.addEventListener('click', () => {
+            isAudioEnabled = !isAudioEnabled;
+            if (isAudioEnabled) {
+                audioBtn.classList.remove('demo-btn-outline');
+                audioBtn.classList.add('demo-btn-audio');
+                audioBtn.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    </svg>
+                    AI Audio On
+                `;
+            } else {
+                audioBtn.classList.remove('demo-btn-audio');
+                audioBtn.classList.add('demo-btn-outline');
+                audioBtn.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    </svg>
+                    AI Audio Off
+                `;
+                // Stop any playing audio
+                audioElement.pause();
+                audioElement.currentTime = 0;
+                if ('speechSynthesis' in window) {
+                    speechSynthesis.cancel();
+                }
+                isAudioPlaying = false;
+            }
+        });
+
+        async function startDemo() {
+            isPlaying = true;
+            currentStep = 0;
+            conversationContainer.innerHTML = '';
+
+            playBtn.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="6" y="4" width="4" height="16"></rect>
+                    <rect x="14" y="4" width="4" height="16"></rect>
+                </svg>
+                Pause Demo
+            `;
+            resetBtn.style.display = 'inline-flex';
+            statusDot.classList.add('active');
+            statusText.textContent = 'Live Demo';
+
+            // Show first message immediately
+            await showMessage(currentStep);
+
+            // Continue with next messages
+            showNextMessage();
+        }
+
+        function showNextMessage() {
+            if (!isPlaying) return;
+
+            // Wait a bit before showing next message
+            setTimeout(() => {
+                if (!isPlaying) return;
+
+                currentStep++;
+
+                if (currentStep >= conversationSteps.length) {
+                    pauseDemo();
+                    statusText.textContent = 'Demo Complete';
+                    return;
+                }
+
+                showMessage(currentStep).then(() => {
+                    // Schedule next message
+                    showNextMessage();
+                });
+            }, isAudioEnabled ? 500 : 3000);
+        }
+
+        function pauseDemo() {
+            isPlaying = false;
+
+            playBtn.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                Play Demo
+            `;
+            statusDot.classList.remove('active');
+            statusText.textContent = currentStep >= conversationSteps.length ? 'Demo Complete' : 'Demo Paused';
+
+            // Stop audio
+            audioElement.pause();
+            audioElement.currentTime = 0;
+            if ('speechSynthesis' in window) {
+                speechSynthesis.cancel();
+            }
+            isAudioPlaying = false;
+        }
+
+        function resetDemo() {
+            pauseDemo();
+            currentStep = 0;
+            conversationContainer.innerHTML = `
+                <div class="demo-placeholder">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="23"></line>
+                        <line x1="8" y1="23" x2="16" y2="23"></line>
+                    </svg>
+                    <p>Click "Play Demo" to see a sample screening conversation</p>
+                    <p style="font-size: 0.813rem; margin-top: 0.5rem;">Enable "AI Audio" to hear realistic AI-generated voices</p>
+                </div>
+            `;
+            resetBtn.style.display = 'none';
+            statusText.textContent = 'Demo Ready';
+        }
+
+        async function showMessage(index) {
+            const step = conversationSteps[index];
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${step.speaker.toLowerCase()}`;
+
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = step.speaker === 'AI' ? '🎧' : '👤';
+
+            const content = document.createElement('div');
+            content.className = 'message-content';
+
+            const header = document.createElement('div');
+            header.className = 'message-header';
+
+            const sender = document.createElement('div');
+            sender.className = 'message-sender';
+            sender.textContent = step.speaker === 'AI' ? 'Nurodot AI' : 'Patient';
+
+            const time = document.createElement('div');
+            time.className = 'message-time';
+            time.textContent = step.timestamp;
+
+            header.appendChild(sender);
+            header.appendChild(time);
+
+            const text = document.createElement('div');
+            text.className = 'message-text';
+            text.textContent = step.message;
+
+            content.appendChild(header);
+            content.appendChild(text);
+
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(content);
+
+            conversationContainer.appendChild(messageDiv);
+            conversationContainer.scrollTop = conversationContainer.scrollHeight;
+
+            // Play audio if enabled
+            if (isAudioEnabled) {
+                await playAudio(step.message, step.speaker);
+            }
+        }
+
+        async function playAudio(text, speaker) {
+            if (!isAudioEnabled) {
+                return Promise.resolve();
+            }
+
+            return new Promise(async (resolve) => {
+                isAudioPlaying = true;
+                audioBtn.disabled = true;
+                audioBtn.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    </svg>
+                    Loading...
+                `;
+
+                try {
+                    const voiceId = speaker === "AI" ? "ai_voice" : "patient_voice";
+
+                    const response = await fetch("/api/eleven-labs-tts", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            text,
+                            voice_id: voiceId,
+                            model_id: "eleven_monolingual_v1",
+                        }),
+                    });
+
+                    if (response.ok) {
+                        const audioBlob = await response.blob();
+                        const audioUrl = URL.createObjectURL(audioBlob);
+
+                        audioElement.src = audioUrl;
+                        audioElement.onended = () => {
+                            isAudioPlaying = false;
+                            audioBtn.disabled = false;
+                            audioBtn.innerHTML = `
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                                </svg>
+                                AI Audio On
+                            `;
+                            URL.revokeObjectURL(audioUrl);
+                            resolve();
+                        };
+                        audioElement.onerror = () => {
+                            isAudioPlaying = false;
+                            audioBtn.disabled = false;
+                            audioBtn.innerHTML = `
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                                </svg>
+                                AI Audio On
+                            `;
+                            URL.revokeObjectURL(audioUrl);
+                            console.log('Audio playback error');
+                            resolve();
+                        };
+
+                        await audioElement.play();
+                    } else {
+                        console.log('ElevenLabs API failed, audio will not play');
+                        isAudioPlaying = false;
+                        audioBtn.disabled = false;
+                        audioBtn.innerHTML = `
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                            </svg>
+                            AI Audio On
+                        `;
+                        resolve();
+                    }
+                } catch (error) {
+                    console.log('Error with ElevenLabs:', error);
+                    isAudioPlaying = false;
+                    audioBtn.disabled = false;
+                    audioBtn.innerHTML = `
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                        </svg>
+                        AI Audio On
+                    `;
+                    resolve();
+                }
+            });
+        }
+
+
+        // Call Form Modal Handling
+        const startCallBtn = document.getElementById('startCallBtn');
+        const callFormModal = document.getElementById('callFormModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const callForm = document.getElementById('callForm');
+        const callStatus = document.getElementById('callStatus');
+
+        startCallBtn.addEventListener('click', () => {
+            callFormModal.style.display = 'flex';
+            // Hide the website language selector when modal opens
+            const languageSelector = document.querySelector('.language-selector');
+            if (languageSelector) {
+                languageSelector.style.display = 'none';
+            }
+        });
+
+        closeModalBtn.addEventListener('click', () => {
+            callFormModal.style.display = 'none';
+            callForm.reset();
+            callStatus.style.display = 'none';
+            // Show the website language selector when modal closes
+            const languageSelector = document.querySelector('.language-selector');
+            if (languageSelector) {
+                languageSelector.style.display = 'flex';
+            }
+        });
+
+        cancelBtn.addEventListener('click', () => {
+            callFormModal.style.display = 'none';
+            callForm.reset();
+            callStatus.style.display = 'none';
+            // Show the website language selector when modal closes
+            const languageSelector = document.querySelector('.language-selector');
+            if (languageSelector) {
+                languageSelector.style.display = 'flex';
+            }
+        });
+
+        // Close modal when clicking outside
+        callFormModal.addEventListener('click', (e) => {
+            if (e.target === callFormModal) {
+                callFormModal.style.display = 'none';
+                callForm.reset();
+                callStatus.style.display = 'none';
+                // Show the website language selector when modal closes
+                const languageSelector = document.querySelector('.language-selector');
+                if (languageSelector) {
+                    languageSelector.style.display = 'flex';
+                }
+            }
+        });
+
+        // Handle form submission
+        callForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const phoneNumber = document.getElementById('phoneNumber').value;
+            const age = document.getElementById('age').value;
+            const gender = document.getElementById('gender').value;
+            const location = document.getElementById('location').value;
+
+            const initiateBtn = document.getElementById('initiateCallBtn');
+            initiateBtn.disabled = true;
+            initiateBtn.textContent = 'Initiating Call...';
+
+            callStatus.style.display = 'block';
+            callStatus.style.background = '#EFF6FF';
+            callStatus.style.color = '#1E40AF';
+            callStatus.textContent = 'Initiating call...';
+
+            try {
+                const response = await fetch('/api/initiate-demo-call', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        phone_number: phoneNumber,
+                        age: age,
+                        gender: gender,
+                        location: location,
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    callStatus.style.background = '#DCFCE7';
+                    callStatus.style.color = '#166534';
+                    callStatus.textContent = '✓ Call initiated successfully! You will receive a call shortly.';
+
+                    setTimeout(() => {
+                        callFormModal.style.display = 'none';
+                        callForm.reset();
+                        callStatus.style.display = 'none';
+                        initiateBtn.disabled = false;
+                        initiateBtn.textContent = 'Initiate Call';
+                    }, 3000);
+                } else {
+                    callStatus.style.background = '#FEE2E2';
+                    callStatus.style.color = '#991B1B';
+                    callStatus.textContent = '✗ Failed to initiate call: ' + (data.error || 'Unknown error');
+                    initiateBtn.disabled = false;
+                    initiateBtn.textContent = 'Initiate Call';
+                }
+            } catch (error) {
+                callStatus.style.background = '#FEE2E2';
+                callStatus.style.color = '#991B1B';
+                callStatus.textContent = '✗ Error: ' + error.message;
+                initiateBtn.disabled = false;
+                initiateBtn.textContent = 'Initiate Call';
+            }
+        });
+
+        // Form submission
+        function handleSubmit(event) {
+            event.preventDefault();
+            const button = event.target.querySelector('button');
+            button.textContent = 'Thank you!';
+            button.style.background = 'var(--success)';
+            setTimeout(() => {
+                button.textContent = 'Get Started';
+                button.style.background = '';
+                event.target.reset();
+            }, 3000);
+        }
+
+        // Language switching functionality
+        const languageBtn = document.getElementById('languageBtn');
+        const languageDropdown = document.getElementById('languageDropdown');
+        const currentLanguageSpan = document.getElementById('currentLanguage');
+        const languageOptions = document.querySelectorAll('.language-option');
+
+        // Language flag mapping
+        const languageFlags = {
+            'en': '🇺🇸 EN',
+            'es': '🇪🇸 ES',
+            'fr': '🇫🇷 FR',
+            'de': '🇩🇪 DE',
+            'zh': '🇨🇳 ZH'
+        };
+
+        // Toggle dropdown
+        languageBtn.addEventListener('click', () => {
+            languageDropdown.classList.toggle('active');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.language-selector')) {
+                languageDropdown.classList.remove('active');
+            }
+        });
+
+        // Language selection
+        languageOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                const lang = option.dataset.lang;
+                changeLanguage(lang);
+
+                // Update selected state
+                languageOptions.forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+
+                // Update button text
+                currentLanguageSpan.textContent = languageFlags[lang];
+
+                // Close dropdown
+                languageDropdown.classList.remove('active');
+            });
+        });
+
+        // Function to change language
+        function changeLanguage(lang) {
+            currentLanguage = lang;
+
+            // Update all elements with data-i18n attribute
+            document.querySelectorAll('[data-i18n]').forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                const keys = key.split('.');
+                let translation = translations[lang];
+
+                for (const k of keys) {
+                    translation = translation?.[k];
+                }
+
+                if (translation) {
+                    // Handle HTML content (like <br> tags)
+                    if (translation.includes('<br>')) {
+                        element.innerHTML = translation;
+                    } else {
+                        element.textContent = translation;
+                    }
+                }
+            });
+
+            // Update all elements with data-i18n-placeholder attribute
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
+                const key = element.getAttribute('data-i18n-placeholder');
+                const keys = key.split('.');
+                let translation = translations[lang];
+
+                for (const k of keys) {
+                    translation = translation?.[k];
+                }
+
+                if (translation) {
+                    element.placeholder = translation;
+                }
+            });
+
+            // Store language preference
+            localStorage.setItem('preferredLanguage', lang);
+        }
+
+        // Load saved language preference on page load
+        const savedLanguage = localStorage.getItem('preferredLanguage');
+        if (savedLanguage && translations[savedLanguage]) {
+            changeLanguage(savedLanguage);
+            currentLanguageSpan.textContent = languageFlags[savedLanguage];
+            languageOptions.forEach(opt => {
+                opt.classList.toggle('selected', opt.dataset.lang === savedLanguage);
+            });
+        }
+
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+
+        // Restart animations when scrolling into view
+        const observerOptions = {
+            threshold: 0.3,
+            rootMargin: '0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    // Restart patient row animations
+                    const rows = entry.target.querySelectorAll('.patient-row');
+                    rows.forEach((row, index) => {
+                        row.style.animation = 'none';
+                        setTimeout(() => {
+                            row.style.animation = `fade-in 0.5s ease ${index * 0.5}s forwards`;
+                        }, 10);
+                    });
+
+                    // Restart chart animations
+                    const bars = entry.target.querySelectorAll('.chart-bar');
+                    bars.forEach((bar, index) => {
+                        bar.style.animation = 'none';
+                        setTimeout(() => {
+                            bar.style.animation = `grow-bar 1.5s ease-out ${index * 0.1}s forwards`;
+                        }, 10);
+                    });
+                }
+            });
+        }, observerOptions);
+
+        // Observe all mockup windows
+        document.querySelectorAll('.mockup-window').forEach(window => {
+            observer.observe(window);
+        });
+    </script>
+</body>
+</html>
