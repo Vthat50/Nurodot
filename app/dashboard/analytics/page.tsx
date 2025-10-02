@@ -16,7 +16,8 @@ import {
   Users,
   DollarSign,
   AlertCircle,
-  ArrowLeft
+  ArrowLeft,
+  CheckCircle
 } from "lucide-react"
 
 export default function AnalyticsPage() {
@@ -192,22 +193,9 @@ export default function AnalyticsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-600">Total Leads</p>
-                  <p className="text-3xl font-bold text-slate-900 mt-2">{totalLeads}</p>
-                  <p className="text-xs text-slate-600 mt-1">patients in study</p>
-                </div>
-                <Users className="h-12 w-12 text-slate-500 opacity-20" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-600">Calls Made</p>
+                  <p className="text-sm font-medium text-slate-600">Total Calls Made</p>
                   <p className="text-3xl font-bold text-slate-900 mt-2">{totalCalled}</p>
-                  <p className="text-xs text-slate-600 mt-1">{callRate}% of leads</p>
+                  <p className="text-xs text-green-600 mt-1">↑ 12% from last week</p>
                 </div>
                 <PhoneCall className="h-12 w-12 text-blue-500 opacity-20" />
               </div>
@@ -218,11 +206,11 @@ export default function AnalyticsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-600">Pre-screened</p>
-                  <p className="text-3xl font-bold text-slate-900 mt-2">{totalPrescreened}</p>
-                  <p className="text-xs text-slate-600 mt-1">{prescreenRate}% of leads</p>
+                  <p className="text-sm font-medium text-slate-600">Call Completion Rate</p>
+                  <p className="text-3xl font-bold text-slate-900 mt-2">{answerRate}%</p>
+                  <p className="text-xs text-green-600 mt-1">↑ 3% from last week</p>
                 </div>
-                <Target className="h-12 w-12 text-purple-500 opacity-20" />
+                <PhoneIncoming className="h-12 w-12 text-green-500 opacity-20" />
               </div>
             </CardContent>
           </Card>
@@ -231,11 +219,24 @@ export default function AnalyticsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-600">Visits Scheduled</p>
-                  <p className="text-3xl font-bold text-slate-900 mt-2">{totalVisitScheduled}</p>
-                  <p className="text-xs text-slate-600 mt-1">{visitRate}% of leads</p>
+                  <p className="text-sm font-medium text-slate-600">Avg Handle Time</p>
+                  <p className="text-3xl font-bold text-slate-900 mt-2">18:32</p>
+                  <p className="text-xs text-slate-600 mt-1">minutes</p>
                 </div>
-                <Clock className="h-12 w-12 text-green-500 opacity-20" />
+                <Clock className="h-12 w-12 text-purple-500 opacity-20" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-slate-600">Conversion Rate</p>
+                  <p className="text-3xl font-bold text-slate-900 mt-2">{callOutcomePercentages.qualified}%</p>
+                  <p className="text-xs text-green-600 mt-1">↑ 5% from last week</p>
+                </div>
+                <Target className="h-12 w-12 text-amber-500 opacity-20" />
               </div>
             </CardContent>
           </Card>
@@ -319,8 +320,230 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
 
-        {/* Demographic Distribution & Call Performance */}
+        {/* Criteria Verification & Call Performance */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Criteria Verification Performance */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                Criteria Verification Performance
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium">Age Verification</span>
+                    <span className="text-sm font-bold">98%</span>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-2">
+                    <div className="bg-green-500 h-2 rounded-full" style={{width: '98%'}}></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium">Diagnosis Confirmation</span>
+                    <span className="text-sm font-bold">95%</span>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-2">
+                    <div className="bg-green-500 h-2 rounded-full" style={{width: '95%'}}></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium">Study Partner Confirmation</span>
+                    <span className="text-sm font-bold">87%</span>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-2">
+                    <div className="bg-green-500 h-2 rounded-full" style={{width: '87%'}}></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium">Consent Recording</span>
+                    <span className="text-sm font-bold">92%</span>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-2">
+                    <div className="bg-green-500 h-2 rounded-full" style={{width: '92%'}}></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium">Visit Scheduling</span>
+                    <span className="text-sm font-bold">85%</span>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-2">
+                    <div className="bg-amber-500 h-2 rounded-full" style={{width: '85%'}}></div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t">
+                  <p className="text-sm font-semibold text-slate-700 mb-3">Average Questions Needed</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="text-center p-2 bg-slate-50 rounded">
+                      <p className="text-lg font-bold text-slate-900">2.3</p>
+                      <p className="text-xs text-slate-600">Age</p>
+                    </div>
+                    <div className="text-center p-2 bg-slate-50 rounded">
+                      <p className="text-lg font-bold text-slate-900">3.1</p>
+                      <p className="text-xs text-slate-600">Diagnosis</p>
+                    </div>
+                    <div className="text-center p-2 bg-slate-50 rounded">
+                      <p className="text-lg font-bold text-slate-900">2.8</p>
+                      <p className="text-xs text-slate-600">Partner</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Call Performance by Time of Day */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5 text-blue-600" />
+                Call Performance by Time of Day
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="h-64 relative">
+                  {/* Y-axis labels */}
+                  <div className="absolute left-0 top-0 bottom-8 w-8 flex flex-col justify-between text-xs text-slate-600">
+                    <span>100%</span>
+                    <span>75%</span>
+                    <span>50%</span>
+                    <span>25%</span>
+                    <span>0%</span>
+                  </div>
+
+                  {/* Graph area */}
+                  <div className="ml-10 h-full pb-8 relative">
+                    {/* Grid lines */}
+                    <div className="absolute inset-0 flex flex-col justify-between">
+                      <div className="border-t border-slate-200"></div>
+                      <div className="border-t border-slate-200"></div>
+                      <div className="border-t border-slate-200"></div>
+                      <div className="border-t border-slate-200"></div>
+                      <div className="border-t border-slate-200"></div>
+                    </div>
+
+                    {/* Bars */}
+                    <div className="absolute inset-0 flex items-end justify-between gap-0.5 pb-8">
+                      {hourlyAnswerRates.map((hourData) => (
+                        <div
+                          key={hourData.hour}
+                          className="flex-1 bg-blue-600 rounded-t"
+                          style={{height: `${hourData.rate}%`}}
+                          title={`${hourData.hour > 12 ? hourData.hour - 12 : hourData.hour}${hourData.hour >= 12 ? 'pm' : 'am'}: ${hourData.rate}%`}
+                        ></div>
+                      ))}
+                    </div>
+
+                    {/* X-axis labels */}
+                    <div className="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-slate-600">
+                      <span>6a</span>
+                      <span>8a</span>
+                      <span>10a</span>
+                      <span>12p</span>
+                      <span>2p</span>
+                      <span>4p</span>
+                      <span>6p</span>
+                      <span>8p</span>
+                      <span>10p</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <p className="text-xs text-slate-600 mb-1">Best Time to Call</p>
+                      <p className="text-lg font-bold text-blue-900">
+                        {bestTime ? `${bestTime.hour > 12 ? bestTime.hour - 12 : bestTime.hour} ${bestTime.hour >= 12 ? 'PM' : 'AM'}` : 'N/A'}
+                      </p>
+                      <p className="text-xs text-slate-600">{bestTime ? `${bestTime.rate}% answer rate` : 'No data'}</p>
+                    </div>
+                    <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                      <p className="text-xs text-slate-600 mb-1">Worst Time to Call</p>
+                      <p className="text-lg font-bold text-slate-900">
+                        {worstTime ? `${worstTime.hour > 12 ? worstTime.hour - 12 : worstTime.hour} ${worstTime.hour >= 12 ? 'PM' : 'AM'}` : 'N/A'}
+                      </p>
+                      <p className="text-xs text-slate-600">{worstTime ? `${worstTime.rate}% answer rate` : 'No data'}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Financial Metrics & Demographic Distribution */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Financial Metrics */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <DollarSign className="h-5 w-5 text-green-600" />
+                Financial & ROI Metrics
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-slate-50 rounded-lg">
+                    <p className="text-xs text-slate-600 mb-1">Total Campaign Cost</p>
+                    <p className="text-2xl font-bold text-slate-900">${totalCampaignCost.toLocaleString()}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-lg">
+                    <p className="text-xs text-slate-600 mb-1">Cost per Call</p>
+                    <p className="text-2xl font-bold text-slate-900">${costPerCall}</p>
+                  </div>
+                  <div className="p-4 bg-blue-50 rounded-lg">
+                    <p className="text-xs text-blue-700 mb-1">Cost per Answered</p>
+                    <p className="text-2xl font-bold text-blue-900">${costPerAnswered.toLocaleString()}</p>
+                  </div>
+                  <div className="p-4 bg-purple-50 rounded-lg">
+                    <p className="text-xs text-purple-700 mb-1">Cost per Qualified</p>
+                    <p className="text-2xl font-bold text-purple-900">${costPerQualified.toLocaleString()}</p>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                  <p className="text-sm font-semibold text-green-900 mb-2">Cost per Enrolled Patient</p>
+                  <p className="text-3xl font-bold text-green-900">
+                    {enrolledPatients > 0 ? `$${costPerEnrolled.toLocaleString()}` : 'N/A'}
+                  </p>
+                  {enrolledPatients > 0 && percentBelowTarget > 0 && (
+                    <p className="text-xs text-green-700 mt-1">{percentBelowTarget}% below target of $120</p>
+                  )}
+                  {enrolledPatients > 0 && percentBelowTarget < 0 && (
+                    <p className="text-xs text-red-700 mt-1">{Math.abs(percentBelowTarget)}% above target of $120</p>
+                  )}
+                  {enrolledPatients === 0 && (
+                    <p className="text-xs text-slate-600 mt-1">No enrolled patients yet</p>
+                  )}
+                </div>
+
+                <div className="p-4 bg-slate-50 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-semibold text-slate-700">Projected ROI</span>
+                    <Badge className="bg-green-600 text-white">Positive</Badge>
+                  </div>
+                  <div className="text-xs text-slate-600">
+                    Based on $2,500 avg value per enrolled patient
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Demographic Distribution */}
           <Card>
             <CardHeader>
@@ -414,135 +637,7 @@ export default function AnalyticsPage() {
               </div>
             </CardContent>
           </Card>
-
-          {/* Call Performance by Time of Day */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-blue-600" />
-                Call Performance by Time of Day
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="h-64 relative">
-                  {/* Y-axis labels */}
-                  <div className="absolute left-0 top-0 bottom-8 w-8 flex flex-col justify-between text-xs text-slate-600">
-                    <span>100%</span>
-                    <span>75%</span>
-                    <span>50%</span>
-                    <span>25%</span>
-                    <span>0%</span>
-                  </div>
-
-                  {/* Graph area */}
-                  <div className="ml-10 h-full pb-8 relative">
-                    {/* Grid lines */}
-                    <div className="absolute inset-0 flex flex-col justify-between">
-                      <div className="border-t border-slate-200"></div>
-                      <div className="border-t border-slate-200"></div>
-                      <div className="border-t border-slate-200"></div>
-                      <div className="border-t border-slate-200"></div>
-                      <div className="border-t border-slate-200"></div>
-                    </div>
-
-                    {/* Bars */}
-                    <div className="absolute inset-0 flex items-end justify-between gap-0.5 pb-8">
-                      {hourlyAnswerRates.map((hourData) => (
-                        <div
-                          key={hourData.hour}
-                          className="flex-1 bg-blue-600 rounded-t"
-                          style={{height: `${hourData.rate}%`}}
-                          title={`${hourData.hour > 12 ? hourData.hour - 12 : hourData.hour}${hourData.hour >= 12 ? 'pm' : 'am'}: ${hourData.rate}%`}
-                        ></div>
-                      ))}
-                    </div>
-
-                    {/* X-axis labels */}
-                    <div className="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-slate-600">
-                      <span>6a</span>
-                      <span>8a</span>
-                      <span>10a</span>
-                      <span>12p</span>
-                      <span>2p</span>
-                      <span>4p</span>
-                      <span>6p</span>
-                      <span>8p</span>
-                      <span>10p</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                      <p className="text-xs text-slate-600 mb-1">Best Time to Call</p>
-                      <p className="text-lg font-bold text-blue-900">
-                        {bestTime ? `${bestTime.hour > 12 ? bestTime.hour - 12 : bestTime.hour} ${bestTime.hour >= 12 ? 'PM' : 'AM'}` : 'N/A'}
-                      </p>
-                      <p className="text-xs text-slate-600">{bestTime ? `${bestTime.rate}% answer rate` : 'No data'}</p>
-                    </div>
-                    <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                      <p className="text-xs text-slate-600 mb-1">Worst Time to Call</p>
-                      <p className="text-lg font-bold text-slate-900">
-                        {worstTime ? `${worstTime.hour > 12 ? worstTime.hour - 12 : worstTime.hour} ${worstTime.hour >= 12 ? 'PM' : 'AM'}` : 'N/A'}
-                      </p>
-                      <p className="text-xs text-slate-600">{worstTime ? `${worstTime.rate}% answer rate` : 'No data'}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
-
-        {/* Financial Metrics */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-green-600" />
-              Financial & ROI Metrics
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-slate-50 rounded-lg">
-                  <p className="text-xs text-slate-600 mb-1">Total Campaign Cost</p>
-                  <p className="text-2xl font-bold text-slate-900">${totalCampaignCost.toLocaleString()}</p>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-lg">
-                  <p className="text-xs text-slate-600 mb-1">Cost per Call</p>
-                  <p className="text-2xl font-bold text-slate-900">${costPerCall}</p>
-                </div>
-                <div className="p-4 bg-blue-50 rounded-lg">
-                  <p className="text-xs text-blue-700 mb-1">Cost per Answered</p>
-                  <p className="text-2xl font-bold text-blue-900">${costPerAnswered.toLocaleString()}</p>
-                </div>
-                <div className="p-4 bg-purple-50 rounded-lg">
-                  <p className="text-xs text-purple-700 mb-1">Cost per Qualified</p>
-                  <p className="text-2xl font-bold text-purple-900">${costPerQualified.toLocaleString()}</p>
-                </div>
-              </div>
-
-              <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                <p className="text-sm font-semibold text-green-900 mb-2">Cost per Enrolled Patient</p>
-                <p className="text-3xl font-bold text-green-900">
-                  {enrolledPatients > 0 ? `$${costPerEnrolled.toLocaleString()}` : 'N/A'}
-                </p>
-                {enrolledPatients > 0 && percentBelowTarget > 0 && (
-                  <p className="text-xs text-green-700 mt-1">{percentBelowTarget}% below target of $120</p>
-                )}
-                {enrolledPatients > 0 && percentBelowTarget < 0 && (
-                  <p className="text-xs text-red-700 mt-1">{Math.abs(percentBelowTarget)}% above target of $120</p>
-                )}
-                {enrolledPatients === 0 && (
-                  <p className="text-xs text-slate-600 mt-1">No enrolled patients yet</p>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </main>
     </div>
   )
