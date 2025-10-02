@@ -44,7 +44,7 @@ export default function StudyDetailPage() {
             <p className="text-sm text-slate-600 mb-4">
               Please select a study first.
             </p>
-            <Button onClick={() => router.push('/ingest')}>
+            <Button onClick={() => router.push('/dashboard/ingest')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Studies
             </Button>
@@ -100,7 +100,7 @@ export default function StudyDetailPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => router.push('/ingest')}
+                onClick={() => router.push('/dashboard/ingest')}
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Studies
@@ -565,7 +565,7 @@ export default function StudyDetailPage() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>All Patients in Study</CardTitle>
-                  <Button onClick={() => router.push('/ingest/detail/patients')}>
+                  <Button onClick={() => router.push('/dashboard/ingest/detail/patients')}>
                     <Users className="h-4 w-4 mr-2" />
                     View All Patients
                   </Button>
@@ -581,7 +581,7 @@ export default function StudyDetailPage() {
                     <p className="text-sm text-slate-600 mb-6">
                       Import patients to start screening for this study.
                     </p>
-                    <Button onClick={() => router.push('/ingest/patients')}>
+                    <Button onClick={() => router.push('/dashboard/ingest/patients')}>
                       <Upload className="h-4 w-4 mr-2" />
                       Import Patients
                     </Button>
@@ -625,7 +625,7 @@ export default function StudyDetailPage() {
                       </div>
                     ))}
                     {studyPatients.length > 10 && (
-                      <Button variant="outline" className="w-full" onClick={() => router.push('/ingest/detail/patients')}>
+                      <Button variant="outline" className="w-full" onClick={() => router.push('/dashboard/ingest/detail/patients')}>
                         View All {studyPatients.length} Patients
                       </Button>
                     )}
@@ -641,7 +641,7 @@ export default function StudyDetailPage() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>Active Campaigns</CardTitle>
-                  <Button onClick={() => router.push('/campaigns')}>
+                  <Button onClick={() => router.push('/dashboard/campaigns')}>
                     <Target className="h-4 w-4 mr-2" />
                     View All Campaigns
                   </Button>
@@ -657,7 +657,7 @@ export default function StudyDetailPage() {
                     <p className="text-sm text-slate-600 mb-6">
                       Create a campaign to start reaching out to qualified patients.
                     </p>
-                    <Button onClick={() => router.push('/ingest/patients')}>
+                    <Button onClick={() => router.push('/dashboard/ingest/patients')}>
                       Create Campaign
                     </Button>
                   </div>
@@ -801,14 +801,14 @@ export default function StudyDetailPage() {
                     variant="outline"
                     size="sm"
                     className="w-full"
-                    onClick={() => router.push('/protocol')}
+                    onClick={() => router.push('/dashboard/protocol')}
                   >
                     View Version History
                   </Button>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
-                  <Button variant="outline" size="sm" onClick={() => router.push('/protocol')}>
+                  <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/protocol')}>
                     <Upload className="h-3 w-3 mr-2" />
                     Upload New Version
                   </Button>

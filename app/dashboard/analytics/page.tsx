@@ -34,7 +34,7 @@ export default function AnalyticsPage() {
             <p className="text-sm text-slate-600 mb-4">
               Please select a study to view analytics.
             </p>
-            <Button onClick={() => router.push('/ingest')}>
+            <Button onClick={() => router.push('/dashboard/ingest')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Go to Studies
             </Button>

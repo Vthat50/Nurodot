@@ -147,7 +147,7 @@ export default function PatientProfilePage() {
           <CardContent className="p-6 text-center">
             <AlertCircle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">Patient Not Found</h3>
-            <Button onClick={() => router.push('/ingest/detail/patients')}>
+            <Button onClick={() => router.push('/dashboard/ingest/detail/patients')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Patients
             </Button>
@@ -213,7 +213,7 @@ export default function PatientProfilePage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => router.push('/ingest/detail/patients')}
+                onClick={() => router.push('/dashboard/ingest/detail/patients')}
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Patients

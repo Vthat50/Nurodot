@@ -156,7 +156,7 @@ export default function DashboardPage() {
         message: `${pendingReview} patients pending review in ${study.title}`,
         action: () => {
           setCurrentStudy(study)
-          router.push('/ingest/detail/patients')
+          router.push('/dashboard/ingest/detail/patients')
         }
       })
     }
@@ -166,7 +166,7 @@ export default function DashboardPage() {
     workflowAlerts.push({
       type: 'critical',
       message: 'High exclusion rate detected - review inclusion criteria',
-      action: () => router.push('/ingest')
+      action: () => router.push('/dashboard/ingest')
     })
   }
 
@@ -208,15 +208,15 @@ export default function DashboardPage() {
           <p className="text-gray-600">Comprehensive oversight and task prioritization</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => router.push('/ingest')}>
+          <Button variant="outline" onClick={() => router.push('/dashboard/ingest')}>
             <FileText className="h-4 w-4 mr-2" />
             Manage Studies
           </Button>
-          <Button variant="outline" onClick={() => router.push('/ingest/patients')}>
+          <Button variant="outline" onClick={() => router.push('/dashboard/ingest/patients')}>
             <Upload className="h-4 w-4 mr-2" />
             Upload Leads
           </Button>
-          <Button className="bg-green-600 hover:bg-green-700" onClick={() => router.push('/campaigns')}>
+          <Button className="bg-green-600 hover:bg-green-700" onClick={() => router.push('/dashboard/campaigns')}>
             <Target className="h-4 w-4 mr-2" />
             Start Campaign
           </Button>
@@ -250,10 +250,10 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="flex gap-3">
-                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => router.push('/ingest/detail/patients')}>
+                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => router.push('/dashboard/ingest/detail/patients')}>
                     Review Pending Patients
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => router.push('/ingest/detail')}>
+                  <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/ingest/detail')}>
                     View Study Details
                   </Button>
                 </div>
@@ -408,7 +408,7 @@ export default function DashboardPage() {
               <Beaker className="h-16 w-16 text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">No Studies Yet</h3>
               <p className="text-sm text-gray-600 mb-4">Upload a protocol to get started</p>
-              <Button onClick={() => router.push('/ingest')}>
+              <Button onClick={() => router.push('/dashboard/ingest')}>
                 <FileText className="h-4 w-4 mr-2" />
                 Upload Protocol
               </Button>
@@ -453,7 +453,7 @@ export default function DashboardPage() {
                         size="sm"
                         onClick={() => {
                           setCurrentStudy(study)
-                          router.push('/ingest/detail')
+                          router.push('/dashboard/ingest/detail')
                         }}
                       >
                         <Eye className="h-3 w-3 mr-1" />

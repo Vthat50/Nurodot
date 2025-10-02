@@ -42,7 +42,7 @@ export default function CampaignsPage() {
               <p className="text-sm text-slate-600 mb-6 max-w-md mx-auto">
                 Create a screening campaign to manage patient outreach. Add qualified patients from your pre-screening results.
               </p>
-              <Button onClick={() => router.push('/ingest/patients')}>
+              <Button onClick={() => router.push('/dashboard/ingest/patients')}>
                 Go to Patient Screening
               </Button>
             </CardContent>

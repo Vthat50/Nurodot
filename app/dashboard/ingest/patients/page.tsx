@@ -118,7 +118,7 @@ export default function PatientsPage() {
             <p className="text-sm text-slate-600 mb-4">
               Please create or select a study first.
             </p>
-            <Button onClick={() => router.push('/ingest')}>
+            <Button onClick={() => router.push('/dashboard/ingest')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Studies
             </Button>
@@ -428,7 +428,7 @@ export default function PatientsPage() {
 
     setTimeout(() => {
       setIsCreatingCampaign(false)
-      router.push(`/campaigns/${newCampaign.id}`)
+      router.push(`/dashboard/campaigns/${newCampaign.id}`)
     }, 500)
   }
 

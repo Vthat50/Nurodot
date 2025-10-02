@@ -47,7 +47,7 @@ export default function StudyPatientsPage() {
           <CardContent className="p-6 text-center">
             <AlertCircle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">No Study Selected</h3>
-            <Button onClick={() => router.push('/ingest')}>
+            <Button onClick={() => router.push('/dashboard/ingest')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Studies
             </Button>
@@ -144,7 +144,7 @@ export default function StudyPatientsPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => router.push('/ingest/detail')}
+                onClick={() => router.push('/dashboard/ingest/detail')}
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Study

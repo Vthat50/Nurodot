@@ -92,7 +92,7 @@ export default function IngestPage() {
     createStudy(newStudy)
 
     // Redirect to patient import page for the new study
-    router.push('/ingest/patients')
+    router.push('/dashboard/ingest/patients')
   }
 
   const handleCancelEdit = () => {
@@ -387,7 +387,7 @@ export default function IngestPage() {
                         onClick={(e) => {
                           e.stopPropagation()
                           setCurrentStudy(study)
-                          router.push('/ingest/detail')
+                          router.push('/dashboard/ingest/detail')
                         }}
                       >
                         View Details

@@ -320,7 +320,7 @@ export default function CampaignDetailPage() {
           <CardContent className="p-6 text-center">
             <AlertCircle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">Campaign Not Found</h3>
-            <Button onClick={() => router.push('/campaigns')}>
+            <Button onClick={() => router.push('/dashboard/campaigns')}>
               Back to Campaigns
             </Button>
           </CardContent>
@@ -441,7 +441,7 @@ export default function CampaignDetailPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => router.push('/campaigns')}
+                onClick={() => router.push('/dashboard/campaigns')}
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Campaigns

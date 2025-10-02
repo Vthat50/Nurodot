@@ -211,7 +211,7 @@ export default function PatientProfilePage() {
           <CardContent className="p-6 text-center">
             <User className="h-12 w-12 text-slate-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">Patient Not Found</h3>
-            <Button onClick={() => router.push('/ingest/patients')}>
+            <Button onClick={() => router.push('/dashboard/ingest/patients')}>
               Back to Patient List
             </Button>
           </CardContent>
@@ -311,7 +311,7 @@ export default function PatientProfilePage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => router.push('/ingest/patients')}
+                onClick={() => router.push('/dashboard/ingest/patients')}
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Patient List
@@ -535,7 +535,7 @@ export default function PatientProfilePage() {
                 {patientData.eligibility.qualified && (
                   <Button
                     className="w-full"
-                    onClick={() => router.push('/campaigns')}
+                    onClick={() => router.push('/dashboard/campaigns')}
                   >
                     <UserPlus className="h-4 w-4 mr-2" />
                     Add to Screening Campaign
