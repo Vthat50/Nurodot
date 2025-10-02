@@ -66,7 +66,7 @@ export default function CampaignsPage() {
                   className="cursor-pointer transition-all hover:shadow-md hover:border-blue-300"
                   onClick={() => {
                     setCurrentCampaign(campaign)
-                    router.push(`/campaigns/${campaign.id}`)
+                    router.push(`/dashboard/campaigns/${campaign.id}`)
                   }}
                 >
                   <CardHeader>

@@ -592,7 +592,7 @@ export default function StudyDetailPage() {
                       <div
                         key={patient.id}
                         className="border rounded-lg p-4 hover:bg-slate-50 cursor-pointer transition-colors"
-                        onClick={() => router.push(`/ingest/patients/${patient.id}`)}
+                        onClick={() => router.push(`/dashboard/ingest/patients/${patient.id}`)}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
@@ -667,7 +667,7 @@ export default function StudyDetailPage() {
                       <div
                         key={campaign.id}
                         className="border rounded-lg p-4 hover:bg-slate-50 cursor-pointer transition-colors"
-                        onClick={() => router.push(`/campaigns/${campaign.id}`)}
+                        onClick={() => router.push(`/dashboard/campaigns/${campaign.id}`)}
                       >
                         <div className="flex items-center justify-between mb-2">
                           <h4 className="font-semibold text-slate-900">{campaign.name}</h4>

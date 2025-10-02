@@ -716,7 +716,7 @@ export default function CampaignDetailPage() {
                           variant="outline"
                           onClick={(e) => {
                             e.stopPropagation()
-                            router.push(`/ingest/patients/${patient.id}`)
+                            router.push(`/dashboard/ingest/patients/${patient.id}`)
                           }}
                         >
                           <User className="h-3 w-3 mr-1" />

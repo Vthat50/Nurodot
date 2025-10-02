@@ -700,7 +700,7 @@ export default function PatientsPage() {
                       )}
                       <div
                         className="flex-1 cursor-pointer"
-                        onClick={() => router.push(`/ingest/patients/${result.patient.id}`)}
+                        onClick={() => router.push(`/dashboard/ingest/patients/${result.patient.id}`)}
                       >
                         <div className="flex items-center gap-2 mb-2">
                           {result.matches ? (
