@@ -710,6 +710,51 @@ export default function PatientProfilePage() {
                     const showVerbalConsent = message.text.includes('Yes, I consent to participate') && message.speaker === 'patient'
                     const showVisitScheduled = message.text.includes('October 5th works great') && message.speaker === 'patient'
 
+                    // GAD-7 symptom detection (patient messages only)
+                    const textLower = message.text.toLowerCase()
+                    const detectedGADSymptoms: string[] = []
+
+                    if (message.speaker === 'patient') {
+                      // GAD-7 Item 1: Feeling nervous, anxious, or on edge
+                      if (textLower.match(/\b(nervous|anxious|on edge|tense|jittery)\b/)) {
+                        detectedGADSymptoms.push('Feeling nervous/anxious')
+                      }
+                      // GAD-7 Item 2: Not being able to stop or control worrying
+                      if (textLower.match(/\b(can't stop worrying|can't control|constant worry|racing thoughts|overthinking)\b/)) {
+                        detectedGADSymptoms.push('Uncontrollable worry')
+                      }
+                      // GAD-7 Item 3: Worrying too much about different things
+                      if (textLower.match(/\b(worry about everything|worry too much|always worrying|worried all the time)\b/)) {
+                        detectedGADSymptoms.push('Excessive worry')
+                      }
+                      // GAD-7 Item 4: Trouble relaxing
+                      if (textLower.match(/\b(can't relax|trouble relaxing|hard to relax|unable to unwind|restless)\b/)) {
+                        detectedGADSymptoms.push('Trouble relaxing')
+                      }
+                      // GAD-7 Item 5: Being so restless that it's hard to sit still
+                      if (textLower.match(/\b(restless|can't sit still|fidgety|need to move|pacing)\b/)) {
+                        detectedGADSymptoms.push('Restlessness')
+                      }
+                      // GAD-7 Item 6: Becoming easily annoyed or irritable
+                      if (textLower.match(/\b(irritable|easily annoyed|short temper|easily frustrated|on edge)\b/)) {
+                        detectedGADSymptoms.push('Irritability')
+                      }
+                      // GAD-7 Item 7: Feeling afraid something awful might happen
+                      if (textLower.match(/\b(afraid|fear|something bad|something awful|dread|catastroph|worst case)\b/)) {
+                        detectedGADSymptoms.push('Fear of something awful')
+                      }
+                      // Additional patterns
+                      if (textLower.match(/\b(overwhelmed|can't cope|too much|stressed out)\b/)) {
+                        detectedGADSymptoms.push('Feeling overwhelmed')
+                      }
+                      if (textLower.match(/\b(sleep|insomnia|trouble sleeping|can't sleep|awake at night)\b/) &&
+                          textLower.match(/\b(worry|anxious|mind racing)\b/)) {
+                        detectedGADSymptoms.push('Sleep difficulties')
+                      }
+                    }
+
+                    const showGADSymptoms = detectedGADSymptoms.length > 0
+
                     return (
                       <div key={idx} className={`flex gap-4 ${message.speaker === 'ai' ? '' : 'flex-row-reverse'}`}>
                         <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-sm ${
@@ -731,7 +776,7 @@ export default function PatientProfilePage() {
                             <p className="text-xs text-slate-500 mt-2">{message.timestamp}</p>
 
                             {/* Tags attached to message */}
-                            {(showAgeVerified || showDiagnosisConfirmed || showStudyPartner || showVerbalConsent || showVisitScheduled) && (
+                            {(showAgeVerified || showDiagnosisConfirmed || showStudyPartner || showVerbalConsent || showVisitScheduled || showGADSymptoms) && (
                               <div className={`flex flex-wrap gap-2 mt-3 pt-3 border-t ${
                                 message.speaker === 'ai' ? 'border-slate-200' : 'border-green-300'
                               }`}>
@@ -759,6 +804,15 @@ export default function PatientProfilePage() {
                                   <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs">
                                     ✓ Visit Scheduled
                                   </Badge>
+                                )}
+                                {showGADSymptoms && (
+                                  <div className="flex flex-wrap gap-1">
+                                    {detectedGADSymptoms.map((symptom, sIdx) => (
+                                      <Badge key={sIdx} className="bg-orange-100 text-orange-800 border-orange-300 text-xs">
+                                        🧠 GAD-7: {symptom}
+                                      </Badge>
+                                    ))}
+                                  </div>
                                 )}
                               </div>
                             )}
