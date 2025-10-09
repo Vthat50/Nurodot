@@ -809,7 +809,7 @@ export default function PatientProfilePage() {
                                   <div className="flex flex-wrap gap-1">
                                     {detectedGADSymptoms.map((symptom, sIdx) => (
                                       <Badge key={sIdx} className="bg-orange-100 text-orange-800 border-orange-300 text-xs">
-                                        🧠 GAD-7: {symptom}
+                                        GAD-7 compatible symptom: {symptom}
                                       </Badge>
                                     ))}
                                   </div>
