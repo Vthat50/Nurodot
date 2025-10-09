@@ -140,6 +140,26 @@ export default function PatientProfilePage() {
     })
   }
 
+  // Function to highlight mental health keywords in transcript
+  const highlightKeywords = (text: string) => {
+    const keywords = ['anxiety', 'anxious', 'sad', 'sadness', 'depression', 'depressed', 'worry', 'worried', 'stress', 'stressed']
+    const regex = new RegExp(`\\b(${keywords.join('|')})\\b`, 'gi')
+
+    const parts = text.split(regex)
+
+    return parts.map((part, index) => {
+      const isKeyword = keywords.some(kw => kw.toLowerCase() === part.toLowerCase())
+      if (isKeyword) {
+        return (
+          <span key={index} className="bg-yellow-200 text-yellow-900 font-semibold px-1 rounded">
+            {part}
+          </span>
+        )
+      }
+      return <span key={index}>{part}</span>
+    })
+  }
+
   if (!patient) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
@@ -707,7 +727,7 @@ export default function PatientProfilePage() {
                               ? 'bg-white border border-slate-200'
                               : 'bg-green-100 border border-green-200'
                           }`}>
-                            <p className="text-sm sm:text-base text-slate-900 leading-relaxed">{message.text}</p>
+                            <p className="text-sm sm:text-base text-slate-900 leading-relaxed">{highlightKeywords(message.text)}</p>
                             <p className="text-xs text-slate-500 mt-2">{message.timestamp}</p>
 
                             {/* Tags attached to message */}
